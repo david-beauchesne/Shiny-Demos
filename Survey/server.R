@@ -1,4 +1,6 @@
 library(shiny)
+library(rdrop2)
+token <- readRDS("droptoken.rds")
 
 # Read the survey questions for multiple quizzes
 # Save questions as a list of questions for multiple quizzes
@@ -29,7 +31,7 @@ shinyServer(function(input, output) {
     # There could be a way to automate the quiz selection and tab generation as a function of the length of Qlist, but no time or interest for it at this point
 
       # Create an empty vector to hold survey results
-      load('./plot_table.RData')
+      drop_get('/phd/misc/surveytool/survey/server_files/plot_table.RDS', dtoken = token, overwrite = TRUE)
       results_1 <<- rep("", nrow(Qlist_1))
       grade_1 <<- 0
       # Empty table to store results for plotOutput
@@ -120,7 +122,7 @@ shinyServer(function(input, output) {
           grade_1 <- sum(as.numeric(Alist_1[,2] == presults_1[input$participants, 1:nrow(Qlist_1)]) * pt)
           names(grade_1) <- input$participants
 
-          load('./plot_table.RData')
+          plot_table <- readRDS('./plot_table.RDS')
           if(!input$participants %in% rownames(plot_table)) {
               n <- sum(!rownames(plot_table) == '')
 
@@ -131,8 +133,10 @@ shinyServer(function(input, output) {
           }
 
           plot_table[, 'Total'] <- rowsum(t(plot_table[, 1:nQuiz]), rep(1,nQuiz))
-          save(plot_table, file = './plot_table.RData')
           saveRDS(plot_table, file = './plot_table.RDS')
+
+          drop_upload('./plot_table.RDS', dest = '/PhD/Misc/SurveyTool/Survey/Server_files', dtoken = token)
+
 
         }
         # Because there has to be a UI object to call this function I set up render text that distplays the content of this funciton.
@@ -164,8 +168,6 @@ shinyServer(function(input, output) {
 
 
 
-
-
     # --------------------------------------------------------------------
     # --------------------------------------------------------------------
     # ------------------------------ Results -----------------------------
@@ -176,7 +178,7 @@ shinyServer(function(input, output) {
 
     # reactive file reader that checks on updates made to the file and reloads it if necessary
     plot_table2 <- reactiveFileReader(intervalMillis = 5000, session = NULL, './plot_table.RDS', readRDS)
-    
+
     output$results <- renderPlot({
             barplot(plot_table2()[,'Total'])
         })
