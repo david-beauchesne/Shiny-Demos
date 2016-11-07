@@ -1,5 +1,7 @@
 library(shiny)
 library(rdrop2)
+library(stringr)
+source('./loadData.r')
 token <- readRDS("droptoken.rds")
 
 # Read the survey questions for multiple quizzes
@@ -31,7 +33,7 @@ shinyServer(function(input, output) {
     # There could be a way to automate the quiz selection and tab generation as a function of the length of Qlist, but no time or interest for it at this point
 
       # Create an empty vector to hold survey results
-      drop_get('/phd/misc/surveytool/survey/server_files/plot_table.RDS', dtoken = token, overwrite = TRUE)
+      drop_get('/phd/misc/surveytool/survey/plot_table.RDS', dtoken = token, overwrite = TRUE)
       results_1 <<- rep("", nrow(Qlist_1))
       grade_1 <<- 0
       # Empty table to store results for plotOutput
@@ -65,8 +67,9 @@ shinyServer(function(input, output) {
         if (input$Click.Counter_1==0)
           return(
             list(
-              h5("Welcome to Shiny Survey Tool!"),
-              h6("by Francis Smart")
+            h5('Ce premier quiz vise à tester vos connaissances générales sur Québec Océan!'),
+            h5('Mise en garde :'),
+            h5('N\'essayez pas de faire un retour vers l\'arrière, vous devrez tout recommencer!')
             )
           )
 
@@ -76,7 +79,7 @@ shinyServer(function(input, output) {
           return(
             list(
               h5(textOutput("question_1")),
-              radioButtons("survey_1", "Please Select:", option.list_1())
+              radioButtons("survey_1", "Veuillez sélectionner :", option.list_1())
               )
             )
         }
@@ -120,23 +123,15 @@ shinyServer(function(input, output) {
 
           # Automatic grading of answers
           grade_1 <- sum(as.numeric(Alist_1[,2] == presults_1[input$participants, 1:nrow(Qlist_1)]) * pt)
-          names(grade_1) <- input$participants
+          names(grade_1) <- paste(input$participants, '_1', sep='')
 
-          plot_table <- readRDS('./plot_table.RDS')
-          if(!input$participants %in% rownames(plot_table)) {
-              n <- sum(!rownames(plot_table) == '')
+           write.csv(grade_1, paste('./', input$participants, '_1.csv', sep=''), row.names = TRUE, quote = TRUE)
+           drop_upload(paste('./', input$participants, '_1.csv', sep=''), dest = '/PhD/Misc/SurveyTool/Survey/Server_files', dtoken = token)
 
-              plot_table[n + 1, as.numeric(substring('grade_1',nchar('grade_1'),nchar('grade_1')))] <- grade_1
-              rownames(plot_table)[n+1] <- input$participants
-          } else {
-              plot_table[input$participants, as.numeric(substring('grade_1',nchar('grade_1'),nchar('grade_1')))] <- grade_1 # too complicated, it's simply to be able to replace all _1 in text at once
-          }
+            plot_table <- loadData()
+            saveRDS(plot_table, file = './plot_table.RDS')
 
-          plot_table[, 'Total'] <- rowsum(t(plot_table[, 1:nQuiz]), rep(1,nQuiz))
-          saveRDS(plot_table, file = './plot_table.RDS')
-
-          drop_upload('./plot_table.RDS', dest = '/PhD/Misc/SurveyTool/Survey/Server_files', dtoken = token)
-
+            drop_upload('./plot_table.RDS', dest = '/PhD/Misc/SurveyTool/Survey', dtoken = token)
 
         }
         # Because there has to be a UI object to call this function I set up render text that distplays the content of this funciton.
@@ -161,10 +156,401 @@ shinyServer(function(input, output) {
         )
       })
 
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# --------------------------------- Quiz 2 ------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+  # There could be a way to automate the quiz selection and tab generation as a function of the length of Qlist, but no time or interest for it at this point
+
+    # Create an empty vector to hold survey results
+    drop_get('/phd/misc/surveytool/survey/plot_table.RDS', dtoken = token, overwrite = TRUE)
+    results_2 <<- rep("", nrow(Qlist_2))
+    grade_2 <<- 0
+    # Empty table to store results for plotOutput
+
+    # Name each element of the vector based on the
+    # second column of the Qlist
+    names(results_2)  <<- Qlist_2[,2]
+
+    # Hit counter
+    output$counter_2 <-
+      renderText({
+        if (!file.exists("./counter_2.Rdata")) counter_2 <- 0
+        if (file.exists("./counter_2.Rdata")) load(file="./counter_2.Rdata")
+        counter_2 <- counter_2 <<- counter_2 + 1
+
+        save(counter_2, file="./counter_2.Rdata")
+        paste0("Hits: ", counter_2)
+      })
 
 
+    # This renderUI function holds the primary actions of the
+    # survey area.
+    output$MainAction_2 <- renderUI( {
+      dynamicUi_2()
+    })
+
+    # Dynamic UI is the interface which changes as the survey
+    # progresses.
+    dynamicUi_2 <- reactive({
+      # Initially it shows a welcome message.
+      if (input$Click.Counter_2==0)
+        return(
+          list(
+          h5('Ce premier quiz vise à tester vos connaissances générales sur Québec Océan!'),
+          h5('Mise en garde :'),
+          h5('N\'essayez pas de faire un retour vers l\'arrière, vous devrez tout recommencer!')
+          )
+        )
+
+      # Once the next button has been clicked once we see each question
+      # of the survey.
+      if (input$Click.Counter_2>0 & input$Click.Counter_2<=nrow(Qlist_2)) {
+        return(
+          list(
+            h5(textOutput("question_2")),
+            radioButtons("survey_2", "Veuillez sélectionner :", option.list_2())
+            )
+          )
+      }
+
+      # Finally we see results of the survey as well as a
+      # download button.
+      if (input$Click.Counter_2>nrow(Qlist_2)) {
+        return(
+          # list(
+            h4("Merci pour votre participation!")
+          #   )
+          )
+      }
+    })
+
+    # This reactive function is concerned primarily with
+    # saving the results of the survey for this individual.
+    output$save.results_2 <- renderText({
+      # After each click, save the results of the radio buttons.
+      if ((input$Click.Counter_2>0)&(input$Click.Counter_2>!nrow(Qlist_2)))
+        try(results_2[input$Click.Counter_2] <<- input$survey_2)
+        # try is used because there is a brief moment in which
+        # the if condition is true but input$survey = NULL
+
+      # If the user has clicked through all of the survey questions
+      # then R saves the results to the survey file.
+      if (input$Click.Counter_2==nrow(Qlist_2)+1) {
+        if (file.exists("./survey.results_2.Rdata")) {
+            load(file="./survey.results_2.Rdata")
+            rn <- rownames(presults_2)
+        }
+
+        if (!file.exists("./survey.results_2.Rdata")) {
+            presults_2 <- rn <- NULL
+        }
+
+        rn <- c(rn,input$participants)
+        presults_2 <- rbind(presults_2, results_2)
+        rownames(presults_2) <- rn
+        save(presults_2, file="./survey.results_2.Rdata")
+
+        # Automatic grading of answers
+        grade_2 <- sum(as.numeric(Alist_2[,2] == presults_2[input$participants, 1:nrow(Qlist_2)]) * pt)
+        names(grade_2) <- paste(input$participants, '_2', sep='')
+
+         write.csv(grade_2, paste('./', input$participants, '_2.csv', sep=''), row.names = TRUE, quote = TRUE)
+         drop_upload(paste('./', input$participants, '_2.csv', sep=''), dest = '/PhD/Misc/SurveyTool/Survey/Server_files', dtoken = token)
+
+          plot_table <- loadData()
+          saveRDS(plot_table, file = './plot_table.RDS')
+
+          drop_upload('./plot_table.RDS', dest = '/PhD/Misc/SurveyTool/Survey', dtoken = token)
+
+      }
+      # Because there has to be a UI object to call this function I set up render text that distplays the content of this funciton.
+      ""
+    })
+
+    #
+    # The option list is a reative list of elements that updates itself when the click counter is advanced.
+    option.list_2 <- reactive({
+      qlist_2 <- Qlist_2[input$Click.Counter_2,3:ncol(Qlist_2)]
+      # Remove items from the qlist if the option is empty.
+      # Also, convert the option list to matrix.
+      as.matrix(qlist_2[qlist_2!=""])
+    })
+
+    # This function show the question number (Q:)
+    # Followed by the question text.
+    output$question_2 <- renderText({
+      paste0(
+        "Q", input$Click.Counter_2,": ",
+        Qlist_2[input$Click.Counter_2,2]
+      )
+    })
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# --------------------------------- Quiz 3 ------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+    # There could be a way to automate the quiz selection and tab generation as a function of the length of Qlist, but no time or interest for it at this point
+
+      # Create an empty vector to hold survey results
+      drop_get('/phd/misc/surveytool/survey/plot_table.RDS', dtoken = token, overwrite = TRUE)
+      results_3 <<- rep("", nrow(Qlist_3))
+      grade_3 <<- 0
+      # Empty table to store results for plotOutput
+
+      # Name each element of the vector based on the
+      # second column of the Qlist
+      names(results_3)  <<- Qlist_3[,2]
+
+      # Hit counter
+      output$counter_3 <-
+        renderText({
+          if (!file.exists("./counter_3.Rdata")) counter_3 <- 0
+          if (file.exists("./counter_3.Rdata")) load(file="./counter_3.Rdata")
+          counter_3 <- counter_3 <<- counter_3 + 1
+
+          save(counter_3, file="./counter_3.Rdata")
+          paste0("Hits: ", counter_3)
+        })
 
 
+      # This renderUI function holds the primary actions of the
+      # survey area.
+      output$MainAction_3 <- renderUI( {
+        dynamicUi_3()
+      })
+
+      # Dynamic UI is the interface which changes as the survey
+      # progresses.
+      dynamicUi_3 <- reactive({
+        # Initially it shows a welcome message.
+        if (input$Click.Counter_3==0)
+          return(
+            list(
+            h5('Ce premier quiz vise à tester vos connaissances générales sur Québec Océan!'),
+            h5('Mise en garde :'),
+            h5('N\'essayez pas de faire un retour vers l\'arrière, vous devrez tout recommencer!')
+            )
+          )
+
+        # Once the next button has been clicked once we see each question
+        # of the survey.
+        if (input$Click.Counter_3>0 & input$Click.Counter_3<=nrow(Qlist_3)) {
+          return(
+            list(
+              h5(textOutput("question_3")),
+              radioButtons("survey_3", "Veuillez sélectionner :", option.list_3())
+              )
+            )
+        }
+
+        # Finally we see results of the survey as well as a
+        # download button.
+        if (input$Click.Counter_3>nrow(Qlist_3)) {
+          return(
+            # list(
+              h4("Merci pour votre participation!")
+            #   )
+            )
+        }
+      })
+
+      # This reactive function is concerned primarily with
+      # saving the results of the survey for this individual.
+      output$save.results_3 <- renderText({
+        # After each click, save the results of the radio buttons.
+        if ((input$Click.Counter_3>0)&(input$Click.Counter_3>!nrow(Qlist_3)))
+          try(results_3[input$Click.Counter_3] <<- input$survey_3)
+          # try is used because there is a brief moment in which
+          # the if condition is true but input$survey = NULL
+
+        # If the user has clicked through all of the survey questions
+        # then R saves the results to the survey file.
+        if (input$Click.Counter_3==nrow(Qlist_3)+1) {
+          if (file.exists("./survey.results_3.Rdata")) {
+              load(file="./survey.results_3.Rdata")
+              rn <- rownames(presults_3)
+          }
+
+          if (!file.exists("./survey.results_3.Rdata")) {
+              presults_3 <- rn <- NULL
+          }
+
+          rn <- c(rn,input$participants)
+          presults_3 <- rbind(presults_3, results_3)
+          rownames(presults_3) <- rn
+          save(presults_3, file="./survey.results_3.Rdata")
+
+          # Automatic grading of answers
+          grade_3 <- sum(as.numeric(Alist_3[,2] == presults_3[input$participants, 1:nrow(Qlist_3)]) * pt)
+          names(grade_3) <- paste(input$participants, '_3', sep='')
+
+           write.csv(grade_3, paste('./', input$participants, '_3.csv', sep=''), row.names = TRUE, quote = TRUE)
+           drop_upload(paste('./', input$participants, '_3.csv', sep=''), dest = '/PhD/Misc/SurveyTool/Survey/Server_files', dtoken = token)
+
+            plot_table <- loadData()
+            saveRDS(plot_table, file = './plot_table.RDS')
+
+            drop_upload('./plot_table.RDS', dest = '/PhD/Misc/SurveyTool/Survey', dtoken = token)
+
+        }
+        # Because there has to be a UI object to call this function I set up render text that distplays the content of this funciton.
+        ""
+      })
+
+      #
+      # The option list is a reative list of elements that updates itself when the click counter is advanced.
+      option.list_3 <- reactive({
+        qlist_3 <- Qlist_3[input$Click.Counter_3,3:ncol(Qlist_3)]
+        # Remove items from the qlist if the option is empty.
+        # Also, convert the option list to matrix.
+        as.matrix(qlist_3[qlist_3!=""])
+      })
+
+      # This function show the question number (Q:)
+      # Followed by the question text.
+      output$question_3 <- renderText({
+        paste0(
+          "Q", input$Click.Counter_3,": ",
+          Qlist_3[input$Click.Counter_3,2]
+        )
+      })
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# --------------------------------- Quiz 4 ------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+  # There could be a way to automate the quiz selection and tab generation as a function of the length of Qlist, but no time or interest for it at this point
+
+    # Create an empty vector to hold survey results
+    drop_get('/phd/misc/surveytool/survey/plot_table.RDS', dtoken = token, overwrite = TRUE)
+    results_4 <<- rep("", nrow(Qlist_4))
+    grade_4 <<- 0
+    # Empty table to store results for plotOutput
+
+    # Name each element of the vector based on the
+    # second column of the Qlist
+    names(results_4)  <<- Qlist_4[,2]
+
+    # Hit counter
+    output$counter_4 <-
+      renderText({
+        if (!file.exists("./counter_4.Rdata")) counter_4 <- 0
+        if (file.exists("./counter_4.Rdata")) load(file="./counter_4.Rdata")
+        counter_4 <- counter_4 <<- counter_4 + 1
+
+        save(counter_4, file="./counter_4.Rdata")
+        paste0("Hits: ", counter_4)
+      })
+
+
+    # This renderUI function holds the primary actions of the
+    # survey area.
+    output$MainAction_4 <- renderUI( {
+      dynamicUi_4()
+    })
+
+    # Dynamic UI is the interface which changes as the survey
+    # progresses.
+    dynamicUi_4 <- reactive({
+      # Initially it shows a welcome message.
+      if (input$Click.Counter_4==0)
+        return(
+          list(
+          h5('Ce premier quiz vise à tester vos connaissances générales sur Québec Océan!'),
+          h5('Mise en garde :'),
+          h5('N\'essayez pas de faire un retour vers l\'arrière, vous devrez tout recommencer!')
+          )
+        )
+
+      # Once the next button has been clicked once we see each question
+      # of the survey.
+      if (input$Click.Counter_4>0 & input$Click.Counter_4<=nrow(Qlist_4)) {
+        return(
+          list(
+            h5(textOutput("question_4")),
+            radioButtons("survey_4", "Veuillez sélectionner :", option.list_4())
+            )
+          )
+      }
+
+      # Finally we see results of the survey as well as a
+      # download button.
+      if (input$Click.Counter_4>nrow(Qlist_4)) {
+        return(
+          # list(
+            h4("Merci pour votre participation!")
+          #   )
+          )
+      }
+    })
+
+    # This reactive function is concerned primarily with
+    # saving the results of the survey for this individual.
+    output$save.results_4 <- renderText({
+      # After each click, save the results of the radio buttons.
+      if ((input$Click.Counter_4>0)&(input$Click.Counter_4>!nrow(Qlist_4)))
+        try(results_4[input$Click.Counter_4] <<- input$survey_4)
+        # try is used because there is a brief moment in which
+        # the if condition is true but input$survey = NULL
+
+      # If the user has clicked through all of the survey questions
+      # then R saves the results to the survey file.
+      if (input$Click.Counter_4==nrow(Qlist_4)+1) {
+        if (file.exists("./survey.results_4.Rdata")) {
+            load(file="./survey.results_4.Rdata")
+            rn <- rownames(presults_4)
+        }
+
+        if (!file.exists("./survey.results_4.Rdata")) {
+            presults_4 <- rn <- NULL
+        }
+
+        rn <- c(rn,input$participants)
+        presults_4 <- rbind(presults_4, results_4)
+        rownames(presults_4) <- rn
+        save(presults_4, file="./survey.results_4.Rdata")
+
+        # Automatic grading of answers
+        grade_4 <- sum(as.numeric(Alist_4[,2] == presults_4[input$participants, 1:nrow(Qlist_4)]) * pt)
+        names(grade_4) <- paste(input$participants, '_4', sep='')
+
+         write.csv(grade_4, paste('./', input$participants, '_4.csv', sep=''), row.names = TRUE, quote = TRUE)
+         drop_upload(paste('./', input$participants, '_4.csv', sep=''), dest = '/PhD/Misc/SurveyTool/Survey/Server_files', dtoken = token)
+
+          plot_table <- loadData()
+          saveRDS(plot_table, file = './plot_table.RDS')
+
+          drop_upload('./plot_table.RDS', dest = '/PhD/Misc/SurveyTool/Survey', dtoken = token)
+
+      }
+      # Because there has to be a UI object to call this function I set up render text that distplays the content of this funciton.
+      ""
+    })
+
+    #
+    # The option list is a reative list of elements that updates itself when the click counter is advanced.
+    option.list_4 <- reactive({
+      qlist_4 <- Qlist_4[input$Click.Counter_4,3:ncol(Qlist_4)]
+      # Remove items from the qlist if the option is empty.
+      # Also, convert the option list to matrix.
+      as.matrix(qlist_4[qlist_4!=""])
+    })
+
+    # This function show the question number (Q:)
+    # Followed by the question text.
+    output$question_4 <- renderText({
+      paste0(
+        "Q", input$Click.Counter_4,": ",
+        Qlist_4[input$Click.Counter_4,2]
+      )
+    })
 
 
 
@@ -180,8 +566,16 @@ shinyServer(function(input, output) {
     plot_table2 <- reactiveFileReader(intervalMillis = 5000, session = NULL, './plot_table.RDS', readRDS)
 
     output$results <- renderPlot({
-            barplot(plot_table2()[,'Total'])
-        })
+        max_pt <- 0
+        for(i in 1:length(Qlist)) {
+            max_pt <- (max_pt + nrow(Qlist[[i]]))
+        }
+        max_pt <- max_pt * pt
+
+        op <- par(mar = c(10,4,4,2) + 0.1)
+        barplot(plot_table2()[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table2()[,'name'], las = 3)
+        par(op) ## reset
+    })
 
 
 })
