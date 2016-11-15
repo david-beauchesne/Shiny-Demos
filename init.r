@@ -12,5 +12,19 @@ setwd("/Users/davidbeauchesne/Dropbox/PhD/Misc/SurveyTool")
 # FUNCTIONS:
 
 # -----------------------------------------------------------------------------
-
+# install.packages("shiny")
+# install.packages("rdrop2")
+#  install.packages("stringr")
 setwd("./Survey")
+
+# To initialize survey without any results
+# Change loadData.r if I want to have more than 16 bars set aside in the plot
+total_team <- 16
+plot_table <- data.frame(name = '', Total = rep(0, total_team))
+
+saveRDS(plot_table, file = './plot_table.RDS')
+
+# To deploy app on shinyserver.io
+library(rsconnect)
+rsconnect::setAccountInfo(name='XXXX', token='XXXX', secret='XXXX')
+deployApp()
