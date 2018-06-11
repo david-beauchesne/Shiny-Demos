@@ -26,5 +26,5 @@ saveRDS(plot_table, file = './plot_table.RDS')
 
 # To deploy app on shinyserver.io
 library(rsconnect)
-rsconnect::setAccountInfo(name='XXXX', token='XXXX', secret='XXXX')
+rsconnect::setAccountInfo(name='david-beauchesne', token='9E726A003F62EB18DAC88CFF483BD975', secret='5bdikPCf2o2tqne7QwpqVe7OajvxqaFwJ5JyDgc/')
 deployApp()

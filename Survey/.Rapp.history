@@ -1,0 +1,1034 @@
+plot(sdmdata)
+pairs(sdmdata[,2:5], cex=0.1, fig=TRUE)
+plot(sdmdata, cex = 0.1)
+m1 <- glm(pb ~ bio1 + bio5 + bio12, data=sdmdata)
+class(m1)
+summary(m1)
+m1
+m2 = glm(pb ~ ., data=sdmdata)#
+m2
+summary(m2)
+bc <- bioclim(presvals[,c('bio1', 'bio5', 'bio12')]) > class(bc)#
+class(bc)
+bc <- bioclim(presvals[,c('bio1', 'bio5', 'bio12')]) #
+class(bc)
+bc
+pairs(bc)
+plot(bc)
+pairs(bc, cex = 0.1)
+pairs(bc)
+bio1 = c(40, 150, 200)#
+bio5 = c(60, 115, 290)#
+bio12 = c(600, 1600, 1700)#
+pd = data.frame(cbind(bio1, bio5, bio12))#
+pd
+predict(m1, pd)#
+predict(bc, pd)
+predict(bc, pd)
+response(bc)
+response(m1)
+response(bc)
+p <- predict(predictors, m1)
+p
+plot(p)
+p <- rnorm(50, mean=0.7, sd=0.3)#
+a <- rnorm(50, mean=0.4, sd=0.4)#
+par(mfrow=c(1, 2))#
+plot(sort(p), col='red', pch=21)
+points(sort(a), col='blue', pch=24)#
+legend(1, 0.95 * max(a,p), c('presence', 'absence'), pch=c(21,24), col=c('red', 'blue'))
+comb = c(p,a)
+comb
+group = c(rep('presence', length(p)), rep('absence', length(a)))
+group
+boxplot(comb~group, col=c('blue', 'red'))
+group = c(rep(1, length(p)), rep(0, length(a)))
+group
+cor.test(comb, group)$estimate
+cor.test(comb, group)
+mv <- wilcox.test(p,a)
+?wilcox.test
+mv
+mv$statistic
+auc <- as.numeric(mv$statistic) / (length(p) * length(a))
+auc
+e <- evaluate(p=p, a=a)
+e
+class(e)
+par(mfrow=c(1, 2))#
+density(e)#
+boxplot(e, col=c('blue', 'red'))
+p <- rnorm(50, mean=0.7, sd=0.3)#
+a <- rnorm(50, mean=0.4, sd=0.4)#
+par(mfrow=c(1, 2))#
+plot(sort(p), col='red', pch=21)#
+points(sort(a), col='blue', pch=24)#
+legend(1, 0.95 * max(a,p), c('presence', 'absence'), pch=c(21,24), col=c('red', 'blue'))#
+comb = c(p,a)#
+group = c(rep('presence', length(p)), rep('absence', length(a)))#
+boxplot(comb~group, col=c('blue', 'red'))#
+#
+# Computing correlation coefficient & AUC#
+group = c(rep(1, length(p)), rep(0, length(a)))#
+cor.test(comb, group)$estimate # correlation coefficient#
+#
+mv <- wilcox.test(p,a)#
+auc <- as.numeric(mv$statistic) / (length(p) * length(a))#
+auc#
+# With dismo package#
+e <- evaluate(p=p, a=a)#
+class(e)#
+e#
+par(mfrow=c(1, 2))#
+density(e)#
+boxplot(e, col=c('blue', 'red'))
+samp <- sample(nrow(sdmdata), round(0.75 * nrow(sdmdata)))
+samp
+traindata <- sdmdata[samp,]
+traindata
+nrow(sampdata)
+nrow(traindata)
+traindata <- traindata[traindata[,1] == 1, 2:9]
+traindata
+testdata <- sdmdata[-samp,]
+testdata
+nrow(testdata)
+bc <- bioclim(traindata)
+bc
+plot(bc)
+e <- evaluate(testdata[testdata==1,], testdata[testdata==0,], bc)
+e
+plot(e, 'ROC')
+pres <- sdmdata[sdmdata[,1] == 1, 2:9]
+pres
+back <- sdmdata[sdmdata[,1] == 0, 2:9]
+back
+k <- 5
+group <- kfold(pres, k)
+group^1:10
+group[1:10]
+group
+unique(group)
+table(group)
+e <- list()
+e
+for (i in 1:k) {#
+     train <- pres[group != i,]#
+     test <- pres[group == i,]#
+     bc <- bioclim(train)#
+     e[[i]] <- evaluate(p=test, a=back, bc) #
+ }
+e
+?slot
+slot(bc)
+slot(pd)
+pd
+auc <- sapply( e, function(x){slot(x, 'auc')} )
+auc
+sapply( e, function(x){ x@t[which.max(x@TPR + x@TNR)] } )
+e[[1]]@t
+names(e[[1]])
+colnames(e[[1]])
+str(e[[1]])
+nr <- nrow(bradypus)
+nr
+s <- sample(nr, 0.25 * nr)
+s
+pres_train <- bradypus[-s, ]
+pres_train
+nr
+nrow(pres_train)
+pres_test <- bradypus[s, ]
+nr <- nrow(backgr)
+backgr
+s <- sample(nr, 0.25 * nr)
+back_train <- backgr[-s, ]#
+back_test <- backgr[s, ]
+back_test
+?ssb
+sb <- ssb(pres_test, back_test, pres_train)#
+sb[,1] / sb[,2]
+sb
+?pwdSample
+i <- pwdSample(pres_test, back_test, pres_train, n=1, tr=0.1)
+i
+pres_test_pwd <- pres_test[!is.na(i[,1]), ]
+back_test_pwd <- back_test[na.omit(as.vector(i)), ]
+pres_test_pwd
+back_test_pwd
+sb2 <- ssb(pres_test_pwd, back_test_pwd, pres_train)#
+sb2[1]/ sb2[2]
+bc <- bioclim(predictors, pres_train)#
+evaluate(bc, p=pres_test, a=back_test, x=predictors)
+evaluate(bc, p=pres_test_pwd, a=back_test_pwd, x=predictors)
+files <- list.files(path=paste(system.file(package="dismo"),'/ex', sep=''), pattern='grd', full.names=TRUE )#
+predictors <- stack(files)#
+file <- paste(system.file(package="dismo"), "/ex/bradypus.csv", sep="") #
+bradypus <- read.table(file, header=TRUE, sep=',')#
+bradypus <- bradypus[,-1]#
+presvals <- extract(predictors, bradypus)#
+backgr <- randomPoints(predictors, 500)#
+absvals <- extract(predictors, backgr)#
+pb <- c(rep(1, nrow(presvals)), rep(0, nrow(absvals)))#
+sdmdata <- data.frame(cbind(pb, rbind(presvals, absvals)))
+sdmdata
+sdmdata[,'biome'] = as.factor(sdmdata[,'biome'])
+group <- kfold(bradypus, 5)
+group
+group <- kfold(bradypus, 5)#
+pres_train <- bradypus[group != 1, ]#
+pres_test <- bradypus[group == 1, ]
+pres_test
+backg <- randomPoints(pred_nf, n=1000, ext=ext, extf = 1.25) > colnames(backg) = c('lon', 'lat')#
+group <- kfold(backg, 5)#
+backg_train <- backg[group != 1, ]#
+backg_test <- backg[group == 1, ]
+backg <- randomPoints(pred_nf, n=1000, ext=ext, extf = 1.25) #
+colnames(backg) = c('lon', 'lat')#
+group <- kfold(backg, 5)#
+backg_train <- backg[group != 1, ]#
+backg_test <- backg[group == 1, ]
+pred_nf <- dropLayer(predictors, 'biome') # for models that do not take categorical layers
+backg <- randomPoints(pred_nf, n=1000, ext=ext, extf = 1.25) #
+colnames(backg) = c('lon', 'lat')#
+group <- kfold(backg, 5)#
+backg_train <- backg[group != 1, ]#
+backg_test <- backg[group == 1, ]
+ext = extent(-90, -32, -33, 23)
+backg <- randomPoints(pred_nf, n=1000, ext=ext, extf = 1.25) #
+colnames(backg) = c('lon', 'lat')#
+group <- kfold(backg, 5)#
+backg_train <- backg[group != 1, ]#
+backg_test <- backg[group == 1, ]
+backg_test
+r = raster(pred_nf, 1)
+plot(!is.na(r), col=c('white', 'light grey'), legend=FALSE) > plot(ext, add=TRUE, col='red', lwd=2)
+plot(!is.na(r), col=c('white', 'light grey'), legend=FALSE)
+plot(ext, add=TRUE, col='red', lwd=2)
+points(backg_train, pch='-', cex=0.5, col='yellow')
+points(backg_train, pch='-', cex=0.5, col='red')
+points(backg_test, pch='-', cex=0.5, col='black')
+points(pres_train, pch= '+', col='green')
+points(pres_test, pch='+', col='blue')
+bc <- bioclim(pred_nf, pres_train)#
+plot(bc, a=1, b=2, p=0.85)
+e <- evaluate(pres_test, backg_test, bc, pred_nf) #
+e
+tr <- threshold(e, 'spec_sens')
+tr
+str(e)
+?threshold
+pb <- predict(pred_nf, bc, ext=ext, progress='') #
+pb
+par(mfrow=c(1,2))#
+plot(pb, main='Bioclim, raw values')#
+plot(wrld_simpl, add=TRUE, border='dark grey') > plot(pb > tr, main='presence/absence')#
+plot(wrld_simpl, add=TRUE, border='dark grey') > points(pres_train, pch='+')
+par(mfrow=c(1,2))#
+plot(pb, main='Bioclim, raw values')#
+plot(wrld_simpl, add=TRUE, border='dark grey') #
+plot(pb > tr, main='presence/absence')#
+plot(wrld_simpl, add=TRUE, border='dark grey') #
+points(pres_train, pch='+')
+dm <- domain(pred_nf, pres_train)#
+e <- evaluate(pres_test, backg_test, dm, pred_nf) #
+e
+pd = predict(pred_nf, dm, ext=ext, progress='') #
+par(mfrow=c(1,2))#
+plot(pd, main='Domain, raw values')#
+plot(wrld_simpl, add=TRUE, border='dark grey') #
+tr <- threshold(e, 'spec_sens')#
+plot(pd > tr, main='presence/absence')#
+plot(wrld_simpl, add=TRUE, border='dark grey') #
+points(pres_train, pch='+')
+mm <- mahal(pred_nf, pres_train)#
+e <- evaluate(pres_test, backg_test, mm, pred_nf) #
+e
+pm = predict(pred_nf, mm, ext=ext, progress='') #
+par(mfrow=c(1,2))#
+pm[pm < -10] <- -10#
+plot(pm, main='Mahalanobis distance')#
+plot(wrld_simpl, add=TRUE, border='dark grey') #
+tr <- threshold(e, 'spec_sens')#
+plot(pm > tr, main='presence/absence')#
+plot(wrld_simpl, add=TRUE, border='dark grey')#
+points(pres_train, pch='+')
+train <- rbind(pres_train, backg_train)#
+pb_train <- c(rep(1, nrow(pres_train)), rep(0, nrow(backg_train))) #
+envtrain <- extract(predictors, train)#
+envtrain <- data.frame( cbind(pa=pb_train, envtrain) )#
+envtrain[,'biome'] = factor(envtrain[,'biome'], levels=1:14)#
+head(envtrain)
+testpres <- data.frame( extract(predictors, pres_test) )#
+testbackg <- data.frame( extract(predictors, backg_test) )#
+testpres[ ,'biome'] = factor(testpres[ ,'biome'], levels=1:14)#
+testbackg[ ,'biome'] = factor(testbackg[ ,'biome'], levels=1:14)
+gm1 <- glm(pa ~ bio1 + bio5 + bio6 + bio7 + bio8 + bio12 + bio16 + bio17, family = binomial(link = "logit"), data=envtrain)#
+summary(gm1)
+coef(gm1)
+gm2 <- glm(pa ~ bio1+bio5 + bio6 + bio7 + bio8 + bio12 + bio16 + bio17, family = gaussian(link = "identity"), data=envtrain)#
+evaluate(testpres, testbackg, gm1)
+ge2 <- evaluate(testpres, testbackg, gm2)#
+ge2
+pg <- predict(predictors, gm2, ext=ext)#
+par(mfrow=c(1,2))#
+plot(pg, main='GLM/gaussian, raw values')#
+plot(wrld_simpl, add=TRUE, border='dark grey') #
+tr <- threshold(ge2, 'spec_sens')#
+plot(pg > tr, main='presence/absence')#
+plot(wrld_simpl, add=TRUE, border='dark grey') #
+points(pres_train, pch='+')#
+points(backg_train, pch='-', cex=0.25)
+QO2016_abstract <- matrix(nrow = 67, ncol = 6, data = NA, dimnames = list(c(), c('Nom', 'Prenom', 'Auteurs', 'Titre', 'Abstract', 'Language')))#
+#
+QO2016_abstract[, 'Nom'] <- c(#
+    "Beauchesne",#
+    "Benkort",#
+    "Berthod",#
+    "Boivin-Rioux",#
+    "Bouchat",#
+    "Bourdages",#
+    "Bravo",#
+    "Brunelle",#
+    "Cabrol",#
+    "Cadaillon",#
+    "Caron",#
+    "Carrascal",#
+    "Casse",#
+    "Charrette",#
+    "Clary",#
+    "Cocheril",#
+    "Cortial",#
+    "Cypihot",#
+    "Daigle",#
+    "Dal Santo Vidal",#
+    "Deschamps",#
+    "Desiage",#
+    "Dezutter",#
+    "Didier",#
+    "Diotte",#
+    "Dispas",#
+    "Dorval",#
+    "Dreujou",#
+    "Dufour",#
+    "Filteau",#
+    "Flores-Melo",#
+    "Gadoin",#
+    "Gavelle",#
+    "Giménez",#
+    "Gremion",#
+    "Joli",#
+    "Kaminsky",#
+    "Kamli",#
+    "Labbé",#
+    "Lacroix-Lepage",#
+    "Latorre",#
+    "Leduc",#
+    "Li",#
+    "Ma",#
+    "Massamba N\'Siala",#
+    "Menu-Courey",#
+    "Millour",#
+    "Mohammadpour",#
+    "Morin",#
+    "Nocera",#
+    "Noisette",#
+    "Olmedo Masat",#
+    "Picard",#
+    "Pierrejean",#
+    "Plante",#
+    "Pourchez",#
+    "Reartes",#
+    "Roberta",#
+    "Schiffrine",#
+    "Schmidmayer",#
+    "Schmutz",#
+    "Sirois",#
+    "Tempestini",#
+    "Tommi-Morin",#
+    "Waqas",#
+    "Yan",#
+    "Zhong")#
+#
+QO2016_abstract[, 'Prenom'] <- c(#
+    "David",#
+    "Déborah",#
+    "Camille",#
+    " Aude",#
+    "Amélie",#
+    "Line",#
+    "Gonzalo",#
+    "Corinne",#
+    "Jory ",#
+    "Andreana",#
+    "Myriam",#
+    "Claudia",#
+    "Marie",#
+    "Joannie",#
+    "Jean",#
+    "Hélène",#
+    "Grégoire",#
+    "Valérie",#
+    "Remi",#
+    "Mariana Inès",#
+    "Charles-Edouard",#
+    "Pierre-Arnaud",#
+    "Thibaud",#
+    "David",#
+    "Frédéric",#
+    "Antoine",#
+    "Julie-Anne",#
+    "Elliot",#
+    "Mylène",#
+    "Gabrielle",#
+    "Ximena",#
+    "Elsa",#
+    "Mathieu",#
+    "Eloísa M.",#
+    "Gwenaëlle",#
+    "Nathalie",#
+    "Julieta",#
+    "Emna",#
+    "Myriam",#
+    "Claudie",#
+    "Maite",#
+    "Noémie",#
+    "Yijie",#
+    "Kevin C.K.",#
+    "Gloria",#
+    "Kayla",#
+    "Mathieu",#
+    "Gholamreza",#
+    "Philippe-Israël",#
+    "Ariadna",#
+    "Fanny",#
+    "Olga Magalí",#
+    "Manon",#
+    "Marie",#
+    "Mathieu",#
+    "Arnaud",#
+    "María B.",#
+    "Hamme",#
+    "Nicolas",#
+    "Peter",#
+    "Anthony",#
+    "Maude",#
+    "Astrid",#
+    "Gwendoline",#
+    "Atif",#
+    "Bo",#
+    "Li")#
+#
+QO2016_abstract[, 'Auteurs'] <- c(#
+    "D. Beauchesne (UQAR-ISMER), P. Desjardins-Proulx, P. Archambault, D. Gravel",#
+    "D. Benkort (U. Laval), D. Lavoie, S. Plourde, F. Maps",#
+    "C. Berthod (UQAR), R. Saint-Louis, G. Triffault-Bouchet, R. Tremblay, J.-P. Gagné, C. Audet, S. Le Floch, N. Lemaire",#
+    "A. Boivin-Rioux (UQAR-ISMER), M. Gosselin, M. Blais",#
+    "A. Bouchat (U. McGill), B. Tremblay",#
+    "L. Bourdages (U. McGill), B. Tremblay",#
+    "G. Bravo (UQAR-ISMER), J. Ciancio, U. Witte, S. Bourgeois, P. Archambault, C. Nozais",#
+    "C. Brunelle (INRS-ETE), P. Francus, M. Des Roches, L.-F. Daigle",#
+    "J. Cabrol (UQAR-ISMER), T. Trombetta, S. Amaudrut,  R. Tremblay, C. Nozais, M. Starr, G. Winkler",#
+    "A. Cadaillon (UQAR-ISMER), M. Starr, I. Schloss, G. Ferreyra",#
+    "M. Caron (UQAR-ISMER), J.-C. Montero-Serrano, G. St-Onge, A. Rochon",#
+    "C. Carrascal (UQAR), S. Bélanger, P. Larouche ",#
+    "M. Casse (UQAR-ISMER), J.-C. Montero-Serrano, G. St-Onge, A. Poirier",#
+    "J. Charette (UQAR-ISMER), M. Gosselin, M. Blais, M. Levasseur",#
+    "J. Clary (UQAR-ISMER), C. Chavanne, L.-P. Nadeau",#
+    "H. Cocheril (UQAR), G. Chaillou, P. Bernatchez",#
+    "G. Cortial (UQAR-ISMER), G. Winkler",#
+    "V. Cypihot (UQAR-ISMER), P. Archambault, K. Howland",#
+    "R. Daigle (U. Laval), C.J. Monaco, A.K. Baldridge",#
+    "M.I. Dal Santo Vidal (UQAR-ISMER), R. Lopez, R. St-Louis, G. Ferreyra, J.-P. Gagné",#
+    "C.-E. Deschamps (UQAR-ISMER), J.-C. Montero-Serrano, G. St-Onge",#
+    "P.-A. Desiage (UQAR-ISMER), J.-C. Montero-Serrano, G. St-Onge",#
+    "T. Dezutter (U. Laval), C. Lalande, C. Dufresne, L. Fortier",#
+    "D. Didier (UQAR), P. Bernatchez, D. Dumont, E. Augereau, C. Caulet",#
+    "F. Diotte (UQAR), S. Bélanger, C. Goyens, J. Charrette, E. Devred, M. Gosselin",#
+    "A. Dispas (UQAR-ISMER), G. Winkler, K. Howland",#
+    "J.-A. Dorval (UQAR-ISMER), P. Archambault, M.-J. Fortin, S.K. Juniper",#
+    "E. Dreujou (UQAR-ISMER), P. Archambault, C. McKindsey",#
+    "M. Dufour (UQAR-ISMER), P. Archambault, J. Bêty",#
+    "G. Filteau (U. Laval), J.-É. Tremblay, P. Raimbault",#
+    "X. Flores-Melo (UQAR-ISMER), G. Ferreyra, I. Schloss, C. Chavanne, G. Almandoz",#
+    "E. Gadoin, G. Ferreyra, M. Starr, K. Cameron-Bergeron, K. Doiron, K. Lemarchand",#
+    "M. Gavelle (UQAR-ISMER), L.-P. Nadeau",#
+    "E.M. Giménez, G. Winkler, M. Hoffmeyer, G. Ferreyra ",#
+    "G. Gremion (UQAR-ISMER), I. Schloss, P. Archambault, L.-P. Nadeau, J.-E. Tremblay, D. Dumont",#
+    "N. Joli (U. Laval),  A. Monier, R. Logares, C. Lovejoy",#
+    "J. Kaminsky (UQAR-ISMER), M. Varisco, R. Sahade, P. Archambault",#
+    "E. Kamli (UQAR-ISMER), C. Chavanne, D. Bourgault, P. Galbraith",#
+    "M. Labbé (U. Laval), A. Lévesque, F. Raymond, M.G. Audet, J. Corbeil, A. Culley",#
+    "C. Lacroix-Lepage (UQAR-ISMER), V. Lesage, P. Archambault, A. Mosnier, J.-F. Gosselin",#
+    "M. Latorre (UQAR-ISMER), G. Almandoz, K. Lemarchand, I. Schloss, G. Ferreyra",#
+    "N. Leduc (U. Laval), L. Bernatchez, P. Archambault, A. Lacoursière-Roussel, K. Howland",#
+    "Y. Li (UQAR-ISMER), H. Xie, M. Scarratt, G. St-Onge ",#
+    "K.C.K. Ma (U. Laval), C. McKindsey, L. Johnson",#
+    "G. Massamba N\'Siala (UQAR), L.-M. Chevin, P. Calosi",#
+    "K. Menu-Courey (UQAR), P. Calosi, D. Daoud, F. Noisette, S. Piedalue, K. Azetsu-Scott",#
+    "M. Millour (UQAR-ISMER), K. Doiron, A. Magesky, K. Lemarchand, É. Pelletier, J.-P. Gagné ",#
+    "G. Mohammadpour (UQAR-ISMER), M.A. Montes-Hugo, J.-P. Gagné, P. Larouche",#
+    "P-.I. Morin (U. Laval), T. Lacour, P.-L. Grondin, F. Bruyant, J. Ferland, M.-H. Forget, N. Donaher, D. Campbell, J. Lavaud, M. Babin",#
+    "A. Nocera (UQAR-ISMER), D. Dumont, I. Schloss, G. Ferreyra",#
+    "F. Noisette (UQAR), S. Piedalue, K. Menu-Courey, P. Calosi",#
+    "O.M. Olmedo Masat (UQAR-ISMER), I. Schloss, B. Mostajir, G. Ferreyra",#
+    "M. Picard (U. Laval), L.E. Johnson",#
+    "M. Pierrejean (U. Laval), P. Archambault, B. de Noves, E. Edinger, C. Nozais",#
+    "M. Plante (U. McGill), B. Tremblay",#
+    "A. Pourchez (U. Laval), C.Dufresne, F. Maps",#
+    "M.B. Reartes, M. Starr, R. Tremblay, L. St-Amand, G. Ferreyra",#
+    "H. Roberta Hamme (U. Victoria, CNC/SCOR). ",#
+    "N. Schiffrine (U. Laval), J.-E.Tremblay, M. Babin ",#
+    "P. Schmidmayer (UQAR-ISMER), M. Cusson, P. Archambault, C. McKindsey",#
+    "A. Schmutz (UQAR), R. St-Louis, R. Tremblay, C. Audet, J.-P. Gagné, É. Pelletier, M. Barthe",#
+    "M. Sirois (UQAR), M. Couturier, A. Barber, Y. Gélinas, G. Chaillou",#
+    "A. Tempestini (UQAR), F. Dufresne",#
+    "G. Tommi-Morin (UQAR), G. Chaillou, A. Rao, M. Sirois",#
+    "A. Waqas (UQAR-ISMER), U. Neumeier",#
+    "B. Yan (UQAR-ISMER), H. Xie, J.-P. Gagné, M. Fournier, P. Brousseau, P. Pharand",#
+    "L. Zhong (UQAR-ISMER), H. Xie, J.-P. Gagné")#
+#
+QO2016_abstract[, 'Titre'] <- c(#
+#
+"The link between machine learning, conference networking, pokemon and ecology",#
+"Modèle individuel physiologique pour le krill, Thysanoessa raschii et Meganyctiphanes norvegica, dans l\'estuaire et le golfe du Saint-Laurent",#
+"Effets biologiques sous-létaux sur la moule bleue des pétroles classique et non classiques dispersés physiquement et chimiquement en milieu marin.",#
+"Méta-analyse de la structure des communautés phytoplanctoniques et des bactéries hétérotrophes dans l’Arctique canadien (2005-2015) : un aperçu.",#
+"Using sea-ice deformation fields from RADARSAT to constrain mechanical strength parameters of geophysical sea ice",#
+"Spatial variability of the Arctic atmospheric temperature inversion over the Arctic Ocean",#
+"Short-term responses of arctic deep-sea benthic macrofauna to pulses of phytodetritus: Preliminary results",#
+"Les côtes à la dérive : Que savons-nous des processus du transport sédimentaire ?",#
+"Seasonal shift in the feeding behaviour among three coexisting krill species in the St. Lawrence estuary revealed by fatty acids and stable isotopes",#
+"Réponses fonctionnelles et structurelles des associations phytoplanctoniques face à une perturbation anthropique : un scénario de déversement d’hydrocarbures",#
+"Dynamique sédimentaire de la marge glaciaire nord-ouest groenlandaise : aperçu des données sédimentologiques, minéralogiques et magnétiques",#
+"Validation de réflectances marines satellitaires à l’aide de bouées océanographiques dans l’estuaire maritime du Saint-Laurent",#
+"Le néodyme comme traceur isotopique des masses d’eau profonde et d’apports lithogéniques dans l’estuaire et le golfe du Saint-Laurent",#
+"Composition taxonomique et stratégie de photoprotection des algues des mares de fonte de l’Arctique canadien",#
+"Is it possible to estimate spectral KE fluxes from HF radars?",#
+"Dynamique hydrogéologique de flèches littorales : exemple du marais de Cap Marteau, Trois-Pistoles, estuaire du Saint-Laurent, Québec",#
+"DEUX ESPÈCES EN UNE : existence d’espèce cryptique révélée chez Neomysis americana dans le système Saint-Laurent",#
+"Caractérisation biologique des habitats côtiers de la région de Churchill, Manitoba",#
+"L’évaluation des coûts et avantages pour la pêche commerciale liés aux réseaux de zones marines protégées",#
+"Suivi de la présence des hydrocarbures aromatiques polycycliques (HAPs) dissous en eau de mer à l\'aide des matrices d\'excitation-émission de fluorescence. Résultats préliminaires d’une expérience simulant un déversement de diésel",#
+"Étude de la provenance des sédiments à partir de la géochimie et de la minéralogie depuis la déglaciation en Arctique de l’ouest",#
+"Origine et dynamique des sédiments du golfe de San Jorge, Patagonie, Argentine",#
+"Warming conditions and the match-mismatch between phytoplankton and zooplankton in the Beaufort Sea",#
+"Morphologie intertidale des plages du Saint-Laurent : modèle 3D haute fréquence par caméras vidéo",#
+"Télédétection hyperspectrale de la composition des communautés de phytoplancton dans le continuum Baie de Baffin – Mer du Labrador : Résultats préliminaires.",#
+"Pristine or invaded ? Zooplankton communities of 3 Canadian Arctic ports",#
+"Dynamique des assemblages benthiques marins à petite échelle spatiale, à Cambridge Bay, NU (Arctique)",#
+"Caractérisation des impacts du cumul de stresseurs anthropiques et naturels sur les écosystèmes de la région de Sept-Îles",#
+"Répartition spatiale des proies des eiders à duvet à East Bay (Île Southampton, Nunavut)",#
+"Dynamique des nutriments et flux biologiques d\'azote lors du bloom printanier en mer de Baffin",#
+"Réponse du phytoplancton au cycle de marée morte-eau/vive-eau dans un front de marée au sud du Golfo San Jorge, Patagonie argentine.",#
+"Effets du diesel maritime sur la structure et le métabolisme de la communauté bactérienne de l\'Estuaire du Saint-Laurent.",#
+"Influence de la glace de mer antarctique sur la circulation méridionale",#
+"Biodiversité, structure spatiale et trophique de la communauté zooplanctonique dans le golfe San Jorge en Patagonie argentine.",#
+"La pompe biologique du carbone: une dynamique en 4 Dimensions",#
+"Seasonal patterns in Arctic prasinophytes and inferred ecology of Bathycoccus unveiled in an Arctic winter metagenome",#
+"Functional benthic ecology in an Argentinean Patagonian gulf: what is where?",#
+"Internal Tides in the Lower St. Lawrence Estuary: Properties and Interactions with Mesoscale Currents",#
+"Distinct communities of phytoplankton viruses in the St. Lawrence estuary transition zone",#
+"Analyse spatiale des assemblages de mammifères marins dans l’estuaire et le golfe du Saint-Laurent",#
+"Distribution de la biomasse de la communauté microbienne et évaluation de son état physiologique dans le Golfe San Jorge, Argentine",#
+"Determining coastal ecological patterns from bottles of waters; the power of the eDNA metabarcoding",#
+"Distribution of dissolved methane in the estuary and Gulf of the St. Lawrence in fall 2016",#
+"Intermediate duration hypothesis: Temporally optimised sampling strategy using larval recruitment plates to monitor for aquatic invasive species",#
+"Rapid evolution and geographic ranges: predicting marine species persistence and distribution in a changing ocean",#
+"Le homard américain est-il en péril ?",#
+"Silver nanoparticles an unexpected journey",#
+"Optical properties of size and chemical fractions of suspended particulate matter in littoral waters of Quebec",#
+"Acclimation of a sea-ice diatom, Fragilariopsis cylindrus, to simulated polar winter darkness and spring-like return to light",#
+"Effet de la migration verticale diurne du zooplancton dans un modèle NPZD appliqué au golfe San Jorge (Patagonie,Argentine)",#
+"Developmental physiology of early life stages of the American lobster exposed to a pH gradient",#
+"Effets d’un déversement pétrolier dans l’estuaire du Saint-Laurent sur le rôle fonctionnel et la composition spécifique du microzooplancton",#
+"L\'exploration in situ des \'tipping points\' des fucales et des laminaires à Sept-Iles lorsqu\'elles font face à de multiples stresseurs en mésocosme.",#
+"Caractérisation des hotspots de l’écosystème benthique dans l’Arctique Canadien",#
+"Arctic Land-Fast Ice: Focus on ice bridges formed in the absence of grounding",#
+"Impact de l’implémentation de la diapause sur la dynamique des assemblages de populations numériques de plancton arctique",#
+"Les effets de l’acidification des océans sur la croissance des larves du pétoncle géant, Placopecten magellanicus",#
+"Using dissolved gases to diagnose the ocean’s carbon pumps",#
+"Effet de différentes sources d’azote et de la lumière sur la stœchiométrie (C:N:P:Si) de Chaetoceros socialis (nov. gelidus)",#
+"Comparaison du fonctionnement des communautés benthiques côtières vulnérables aux hydrocarbures dans l’Estuaire du Saint-Laurent en milieu intertidal",#
+"Effets biologiques sous-létaux sur la Moule bleue (Mytilus édulis) d’une exposition chronique à trois types de pétroles classiques et non-classiques en période hivernale sous glace",#
+"Le carbone organique dissous dans les plages : marin ou terrestre?",#
+"Genetic structure across the Arctic waters: diversity and cryptic speciation of amphipod species",#
+"Les plages de sédiments perméables, source insoupçonnée de carbone inorganique à l’océan côtier",#
+"Spatial and temporal variations of sediment dynamics in a subarctic intertidal zone",#
+"Effect of photochemical transformation on the toxicity of selected#
+pesticides in marine waters",#
+"Photodegradation of the microcystin-LR in a natural organic-aqueous waters")#
+#
+QO2016_abstract[, 'Abstract'] <- c(#
+    "Large networks of ecological interactions are complex to characterize, be it empirically or theoretically. We therefore wondered whether readily available data could be used to predict species interactions in data deficient ecosystems. To test this, we used an unsupervised machine learning method with empirical pairwise interactions datasets to predict interactions between any given set of taxa, given pairwise taxonomic proximity and known consumer and resource sets. Results suggest that pairwise interactions can be predicted with high accuracy (80-100%), with taxonomy complementing empirical data available to increase overall prediction efficiency. Given its high accuracy, this methodology could democratize the use of food webs and network level descriptors in frontier location where empirical data is hard to gather. For this presentation, we present our methodology using an original approach combining a networking tool that we built from participant abstracts and co-author lists and a funny yet infor
+mative example inspired by the Pokemon phenom.",#
+    "Malgré plusieurs décennies de recherche, le rôle écologique et la variabilité naturelle des stocks de krill (Thysanoessa raschii et Meganyctiphanes norvegica) de l\'estuaire et du golfe de Saint-Laurent (EGSL) restent mal compris. Afin de quantifier l’impact des variations des conditions océanographiques sur la productivité du krill dans l’EGSL, nous avons développé des modèles physiologiques individu-centrés considérants les différences interspécifiques de T. raschii et M. norvegica. Ces modèles sont basés sur les principes fondamentaux de la physiologie et de la biologie (relations allométriques, relation universelle à la température, relation fonctionnelle de type Holling, etc.). Les résultats préliminaires permettant de mieux comprendre quels sont les impacts de la variabilité environnementale observée dans l’EGSL sur la croissance et la reproduction des stades adultes de ces deux espèces clés. Ces modèles physiologiques représentent un outil important en fournissan
+t des données pour l’élaboration ultérieure de modèles trophiques et pour la gestion écosystémique des écosystèmes.",#
+    "Le Canada possède d’importantes réserves de pétrole non classique associées aux sables bitumineux. Malgré le manque de connaissance sur la toxicité du bitume dilué (dilbit) sur la faune marine, le Canada souhaite augmenter son exportation d’ici 2030. Son transport comporte des risques non négligeables de déversements accidentels en milieu marin. Des dispersants sont utilisés dans le but de diminuer rapidement la concentration des hydrocarbures d’un milieu impacté. La faible toxicité des agents dispersants a été démontrée pour de nombreuses espèces aquatiques, mais la combinaison dispersant + pétrole brut peut représenter une toxicité accrue. Nos tests sur la moule bleue en conditions estivales montrent de forte mortalité après 48h d’exposition (>60% dispersant seul et >70% dispersant + dilbit), une déstabilisation de la membrane lysosomale de 60% avec la combinaison et des effets néfastes sur l’ADN. Selon nos résultats, le dilbit dispersé chimiquement est plus toxiqu
+e que le pétrole brut classique.",#
+    "Sea-ice deformations in the Arctic Ocean are of great influence on the local and global sea-ice and ocean state in numerical simulations of the Arctic system. The pack ice deformations indeed affect the ice mass balance, the vertical heat fluxes between the ocean and atmosphere, and the upper ocean salinity. While satellite-derived deformation fields from the RADARSAT Geophysical Processor System (RGPS) are known to exhibit power law scaling properties in their spatial dependence as well as in their probability distribution functions (PDFs), the properties of simulated sea-ice deformations are largely set by the chosen sea-ice rheology, i.e. the relation between the internal ice stress and ice strain rates. Using the viscous-plastic (VP) elliptical rheology, we conduct a sensitivity study to investigate the effects of changing the ice mechanical strength parameters on the PDF properties of the sea-ice strain rate invariants and attempt to reconcile recent contradictory results on the ability of the VP
+elliptical framework to reproduce the observed PDF power law scaling (Girard et al. 2009, Spreen et al. 2016). To do so, we first reformulate the VP elliptical rheology to eliminate the ellipse aspect ratio e in favor of introducing the more meaningful ice shear strength parameter S∗, and we also allow the ice to have non-zero isotropic tensile strength, as represented by the ice tensile strength parameter T∗. By designing experiments where the ice mechanical strength parameters are independently modified, we aim at understanding the dependency of the simulated deformation rates on the rheology parameters, and potentially further constrain the mechanical strength parameters of geophysical sea ice by comparing the simulated results to the observed RGPS PDFs.",#
+    "The Arctic atmosphere is characterized by a pervasive low-level temperature inversion, resulting from the balance of surface heat fluxes and atmospheric heat fluxes from the mid-latitudes.  With a diminishing sea ice cover, the temperature inversion is changing with potential impacts on  stability-related climate processes and feedbacks.  While our previous results have shown a strong dependence of inversion strength on the underlying sea ice cover, a large part of the variability at short temporal and spatial scales is left unquantified.  In this study, we use the Arctic System Reanalysis to analyze atmospheric contributions to this variability, by analyzing their formation, deepening, and destruction mechanisms. Preliminary results show large spatial variability in the frequency and life-time of inversions,  and suggests an important link with the location and frequency of synoptic scale systems.",#
+    "Deep-sea Arctic benthic communities depend on organic material settling down from the overlying water column. Despite its importance, little is known about the responses of macrofauna facing future changes regarding quantity and quality of food reaching the seafloor inflicted by sea ice reduction. We conducted on board enrichment experiments with sediment cores collected from boxcores casts (680 m depth) in the Baffin Bay to investigate the macrofauna and bacterial incorporation in thepresence of two different labelled phytodetritus sources (phytoplankton: Thalassiosira nordenskioeldii and ice algae: Synedra hyperborea). A total of 28 taxa were recorded in cores. Agglutinated foraminifera were the most important in terms of abundance and biomass, followed by bivalves and polychaetes. No significant differences were found in abundance and biomass of macrofauna between treatments (control, ice algae and phytoplankton) which make possible future comparisons of 13C incorporation among them.",#
+    "Il est important de se questionner à propos de l’impact des changements climatiques sur la dynamique côtière. Pourquoi ? Tout simplement parce que la majorité des villes sont situées le long des berges. Dans les régions fluviales, ceci est principalement dû au fait qu’il y ait une grande présence de matière organique facilitant la pratique de l’agriculture. Le fait que ces milieux soient près des voies navigables et que le dénivelé y soit faible a également favorisé la construction des villes au fil du temps. Cependant, plusieurs de ces endroits tels que les deltas et les estuaires sont principalement composés de sédiments s’y étant déposés au fil du temps. L’apport sédimentaire des affluents et des courants littoraux jouent donc un rôle fondamental pour déterminer l’évolution du trait de côte et les risques potentiels pour les populations côtières. On s’intéresse alors au niveau d’eau pour connaître le risque de submersion pouvant mettre en mouvement les sé
+diments accumulés. Trois phénomènes majeurs vont influencer ce paramètre. En premier lieu, il y a le phénomène de subsidence qui est l’affaissement du sol par rapport au niveau d’eau. Ce phénomène est accentué par la construction d’infrastructures (i.e., par leur poids) ou par le pompage des eaux souterraines, créant un vide dans le sous-sol. La hausse du niveau d’eau marin prévue par le réchauffement climatique va dans le même sens que la subsidence en augmentant le niveau d’eau apparent à la côte. De plus, la construction de barrages ou d’infrastructures peuvent retenir les sédiments en amont et diminuer le bilan net sédimentaire dans certaines régions provoquant ainsi le recul du trait de côte. La grande question est de savoir s’il est possible de prédire le bilan net du transport sédimentaire d’une région selon les conditions physiques connues et à venir. Pourrait-on résoudre ce problème numériquement ? Il existe bien certainement des modèles numériques caract
+érisant les courants et pouvant être couplés aux équations empiriques du transport sédimentaire. Par contre, les équations du transport sédimentaire sont majoritairement dérivées expérimentalement. Cette approche empirique peut s’avérer inexacte dans certains cas. Par ailleurs, l’application d’équations théoriques nécessite d’effectuer des approximations pouvant induire des erreurs considérables dans les modèles numériques. Il est alors très utile de se doter d’un modèle physique. Le modèle physique est une reproduction à plus petite échelle d’un système. Pour la dynamique sédimentaire, on utilise un canal hydraulique. L’idée est d’y mettre du sable et de l’eau en mouvement pour reproduire une dynamique particulière afin d’en étudier les processus physiques. Dans le cadre de cette recherche, on étudie le transport sédimentaire qui s’exprime ici par la formation de rides de sable. À l’aide de nos techniques de laboratoire, il est possible de caractériser
+les propriétés hydrodynamiques du courant au-dessus de ces rides et la déformation du lit de sédiment. L\'objectif est de déterminer de façon quantitative l\'effet de la forme des rides sur la contrainte de cisaillement au fond et le transport total. Ces connaissances sont fondamentales et très importantes pour la modélisation de l’interaction fluide-particules en milieux naturelles. Les résultats permettront de mieux comprendre la dynamique sédimentaire et d’en améliorer la modélisation. Ce projet doctoral est financé par la Chaire de recherche en ingénierie côtière et fluviale du Québec. Le contenu scientifique est une collaboration entre le Laboratoire multidisciplinaire de tomodensitométrie pour les ressources naturelles et le génie civil de l’INRS, le Centre national d’océanographie d’Angleterre (NOC) et l’Institut national de recherche en sciences et technologies pour l\'environnement et l\'agriculture de France (Irstea).",#
+    "The northern krill community is composed of many species exhibiting diverse morphology and ecology. In the St. Lawrence estuary, three krill species coexist as forage species and play a key role in energy transfer to higher trophic levels. However, the dynamics of their trophic interactions and their feeding behavior are still poorly understood and thus, limit our capability to predict potential shifts in energy flows. Thus, our goal was to determine if diet, feeding behavior, and trophic position differ among species throughout the seasons using multitrophic markers approach (fatty acid and isotopic markers). Both proxies revealed that diets and feeding behavior were significantly different with a seasonal shift to a higher trophic position during summer. Meganyctiphanes norvegica, which is the biggest specie in the SLE, seems to be more of a specialist with a diet mostly based on large copepods whereas Thysanessa spp. fed in higher proportions on phytoplankton and small copepods suggesting a more gen
+eralist feeding behavior. Our results will be discussed in regard of how niche partitioning may support stable coexistence of marine invertebrate.",#
+    "Au Canada, le transport de produits pétroliers est en forte augmentation impliquant des risques de déversement d’hydrocarbures (HCs) avec des conséquences substantielles pour les écosystèmes du Saint-Laurent. La structure et le fonctionnement des réseaux trophiques pélagiques marins dépendent essentiellement du phytoplancton. Ainsi, il est crucial de comprendre comment les HCs affectent ces organismes et les processus clés qui y sont associés. Ce projet, réalisé à l’aide de mésocosmes en été 2016, vise à étudier les effets d’un déversement aigu de HCs sur la structure et la fonction des associations phytoplanctoniques de l’estuaire maritime du Saint-Laurent, en considérant trois étapes dans la succession du phytoplancton : la pré-floraison, la floraison et la période post-floraison. Nos résultats préliminaires montrent une variation de la biomasse et de pigments phytoplanctoniques entre les différents traitements et le contrôle. Les effets les plus négatifs sont obse
+rvés dans un scénario de déversement durant la période de pré-floraison.",#
+    "Le nord-est de la baie de Baffin est une zone d’intérêt particulier car elle reçoit les produits de l’érosion glaciaire et des icebergs provenant de la calotte glaciaire du Groenland. Dans ce contexte, la signature granulométrique, minéralogique et magnétique de trois carottes de sédiments collectées sur la marge continentale à l’ouest du Groenland ont été étudiés afin de (1) reconstituer l’origine des transferts sédimentaires et (2) de documenter les interactions entre la calotte glaciaire du Groenland et le courant ouest groenlandais au cours de l’Holocène. Les analyses paléomagnétiques, combiné avec des âges 14C, indiquent que les trois séquences sédimentaires couvrent les derniers 10 000 ans. Les variations spécifiques de presque tous les traceurs détritiques mesurés dans cette étude sont synchrones avec les autres enregistrements régionaux, supportant l’hypothèse que les fluctuations du nord-ouest de la calotte glaciaire groenlandaise sont principalement dé
+clenchées par des variations de l’intensité du courant ouest groenlandais, eux-mêmes liés à la variabilité climatique de l’Holocène.",#
+    "L’estuaire maritime du Saint-Laurent (EMSL) abrite un écosystème marin complexe et productif. Le ministère des pêches et océan (MPO) a mis en place un programme de monitorage de la zone atlantique afin de suivre l’évolution de l’écosystème marin du Saint-Laurent. L’objectif de mon mémoire est d’évaluer la qualité des données satellitaires de la couleur de l’eau (réflectances marines, Rrs) et de la chlorophylle-a à partir des données radiométriques in situ de la bouée IML-4 acquises entre 2013 et 2015. Mes résultats montrent que les données les Rrs dérivées des capteurs MODIS-Aqua et VIIRS sont systématiquement sous-estimées à toutes les longueurs d’onde du visible. Dans les plus courtes longueurs d’onde les Rrs satellitaires sont souvent négatives. Par conséquent, les estimations de chlorophylle-a sont généralement largement sur-estimées.  Ces résultats confirment le besoin d’améliorer les algorithmes de correction atmosphérique ou d’appliquer des coe
+fficients d’étalonnages spécifiques pour l’EMSL.",#
+    "La composition isotopique du néodyme (notée εNd) est un traceur de la circulation océanique et des apports lithogéniques. Nous présentons ici une étude de calibration dans laquelle la signature isotopique en Nd extraite de la fraction detritique et autigénique (oxyhydroxides de fer et de manganèse) des sédiments de surface de l’estuaire et du golfe du Saint-Laurent (EGSL) a été analysé et comparé avec celui des masses d’eau environnantes. La signature en εNd des masses d’eau varie entre -19 et -22, les valeurs obtenues sur les sédiments lessivés varient entre -17 et -18 tandis que celles obtenues sur la fraction detritique varient entre -16 et -22. L’ensemble de ces résultats montre que la composition isotopique du Nd de l’eau de mer est principalement influencée par les valeurs continentales tres peu radiogéniques du bouclier canadien. Ceci suggère que les isotopes du Nd constituent un témoin prometteur pour mener des études sur les variations des conditions d’altér
+ation dans l’EGSL.",#
+    "À la fin du printemps-début de l’été, la fonte de la neige crée des mares de fonte, pouvant être colonisées par des algues unicellulaires, à la surface de la glace de mer. Jusqu’à maintenant, seulement quelques études ont porté leur attention sur ces écosystèmes dans l’Arctique. Dans ce contexte, nous avons examiné la composition taxonomique et pigmentaire des communautés algales des mares de fonte de l’Arctique canadien durant l’été 2014. Les nanoeukaryotes photosynthétiques (2–20 µm) dominent l’abondance algale totale et les flagellés dominent la communauté de protistes >2 µm. Les caroténoïdes photosynthétiques (PPC) représentent plus de 20 % de la composition pigmentaire algale. Deux acides aminés de type mycosporine (MLAA) ont également été retrouvés dans les mares de fonte. La forte performance photosynthétique des algues indique que ces mécanismes photoprotecteurs (PPC et MLAA) sont efficaces pour prévenir les dommages causés par les rayonnements s
+olaires.",#
+    "Input of kinetic energy by the winds in the ocean occurs at very large scales (order 1000km), whereas dissipation of this energy occurs at very small scales (0.01m). Understanding the complete pathways of energy from its input to its sink would be a milestone of physical oceanography. So far, energy transfer for scales larger than 100 km have been inferred from satellite altimeter observations. However, estimates for scales smaller than 100 km are still lacking due to the limited resolution of present-day altimeters. Regional estimates at scales ranging from tens to a few kilometers could in principle be obtained from high-frequency radars (HFR), provided that measurement limitations and noise do not introduce strong biases. Our goal is thus to assess if new information about how the energy is transferred in this range of spatial scales can be gained from HFRs. To this end, we conduct a feasibility study using a two-layer quasi-geostrophic numerical model, for which the spectral kinetic energy fluxes a
+re well known. rom a reference setup with a doubly-periodic domain, we conduct a thorough examination of errors emerging from i) geometrical constraints (non-periodicity, domain size), and ii) measurement constraints (heterogeneous spatial averaging, noise and missing data).",#
+    "Les corps sédimentaires côtiers sont des aquifères aux dynamiques hydrogéologiques particulières contraints par les forces océaniques. Ils représentent des réserves d’eau douce qui dans certains endroits du globe forment la seule source d’approvisionnement en eau, comme dans les îles par exemple. Au Québec, le cadre bâti s’est fortement développé sur ce type de corps sédimentaires, augmentant la pression de consommation bien que leurs caractéristiques hydrogéologiques soient méconnues. Le marais de Cap Marteau (Trois-Pistoles, Qc) est abrité par une flèche littorale active derrière laquelle se trouvent deux paléoflèches qui sont des réservoirs d’eau douce. L’objectif général de cette présentation est de comprendre la dynamique hydrogéologique annuelle de ces flèches. Plus spécifiquement, nous présenterons 1) l’évolution géomorphologique des flèches en nous basant sur une série de photo aériennes et 2) les dynamiques hydrogéologiques aux échelles des cycl
+es de marée et saisonnière en nous basant sur les niveaux piézométriques recueillis dans les flèches.",#
+    "Ce projet s’intéresse au mysidacé, Neomysis americana, espèce fourragère euryhaline retrouvée en abondance le long de la côte Nord-Est Atlantique Américaine. Il a pour but de décrire l’hétérogénéité génétique à différentes échelles géographiques. Dans le but de montrer cette diversité génétique à fine échelle, 25 stations, réparties selon un gradient de salinité, ont été échantillonnées à travers l’estuaire du Saint-Laurent et la Baie des Chaleurs, autorisant une étude comparative intra- et inter-sites. Une analyse « barcoding » du gène cytochrome oxydase 1 sur l’ADN mitochondriale nous sert d’outil de différenciation génétique révélant l’existence de groupes génétiques potentiels cohabitant au sein de ces habitats. Les résultats préliminaires révèlent deux groupes génétiquement divergents à un niveau de 3%. Ces résultats amènent un questionnement sur la connectivité inter-sites avec l’existence de populations panmictiques ou, à l’inv
+erse, d’une restriction de flux génique due à l’isolation par la distance.",#
+    "Les habitats côtiers abritent une grande diversité d’espèces spécifiques. Dans l’Arctique, cet habitat s’expose à une augmentation d’impacts dans le futur. Des méthodes d’échantillonnage efficaces et peu couteuses sont requises afin d’obtenir des données de références sur les environnements côtiers dans les endroits éloignés. Le projet eSPACE a permis de développer une classification des habitats par vidéographie basée, entre autre, sur le substrat et la géomorphologie. L’objectif est de vérifier la relation entre cette classification et la composition biologique en caractérisant les communautés benthiques côtières et les habitats associés à Churchill, Mb. Ainsi, l’abondance, la diversité et la biomasse des communautés benthiques ont été mesurés dans 6 habitats différents. Les résultats montrent les différences et similitudes de la composition biologique des habitats, illustrant l’importance biologique relative des habitats échantillonnés et validant
+la classification de ces habitats.",#
+    "L’effet des zones de protections marines (ZPM) sur les rendements de pêche est plus ou moins connu. Nous avons développé un nouveau ‘R package’, BESTMPA, pour évaluer l\'impact économique des différentes stratégies de conception de réseaux de ZPM. Les résultats montrent que les réseaux qui protègent l\'habitat d’espèces cibles (e.g.Gadus morhua) ont été les plus rentables pour l\'industrie de la pêche car ils ont été optimisés spatialement pour améliorer la connectivité des populations. Des profits plus élevés ont été obtenus principalement en réduisant la distance parcourue pour pêcher et la réduction de la probabilité d\'un effondrement des stocks. Ces résultats démontre l\'importance d\'intégrer la connectivité des populations dans le processus de planification des ZPM, ainsi que la capacité du package BESTMPA pour explorer les conséquences écologiques et économiques de la conceptions de réseau de ZPM.",#
+    "Ce projet vise à développer des techniques de fluorescence performantes pour l’analyse des constituants individuels du pétrole, en particulier les HAPs, présents dans l’environnement. Les composés aromatiques contenus dans les HAPs absorbent fortement des radiations lumineuses, puis les réémettent sous forme de signaux fluorescents. Grâce à cette propriété des HAPs il est possible de suivre la présence de ces composés dans l’environnement en mesurant des matrices d’excitation-émission de fluorescence (MEEF). En combinant les MEEF avec le traitement de données ¨Parallel Factor Analysis¨ (PARAFAC), il est possible de décomposer les signaux MEEF pour suggérer la présence de HAPs individuels dans l´échantillon naturel. Nous présentons des résultats préliminaires d\'une expérience en mésocosme simulant un déversement de diesel dans l’environnement marin.",#
+    "L’océan Arctique est bordé par différentes province géologiques ayant des signatures chimiques et minéralogiques différentes. Les enregistrements sédimentaires sont des archives du passé permettant de reconstruire les changements de provenance mais aussi le transport par les courants océaniques. En effet, les grains fins peuvent être transportés sur de longues distances par la circulation océanique pour finalement sédimenter loin de leur source d’origine. Finalement les changements de provenance peuvent être interprétés comme une modification du schéma de la circulation océanique. Dans ce contexte nous présentons ici les résultats de la signatures géochimiques et minéralogiques de deux carottes sédimentaires provenant des marges des mers de Beaufort et des Tchouktches dans le but de reconstituer les changements de provenances et le schéma de la circulation océanique en lien avec la variabilité climatique depuis la déglaciation.",#
+    "Le golfe de San Jorge (GSJ, 45°S-47°S) est situé au cœur de la seule masse continentale traversée par la ceinture des vents d’ouest austraux, la Patagonie. Le GSJ constitue ainsi un secteur clé pour documenter l’influence de ces vents sur le climat des hautes latitudes de l’hémisphère sud au cours du temps. Pendant le Quaternaire, la sédimentation dans ce bassin était principalement régie par d’importantes variations climatiques et la baisse du niveau marin associée aux glaciations pléistocènes. À l’actuel, les apports sédimentaires sont principalement contrôlés par les courants océaniques et le transport éolien. Les résultats présentés lors de ce colloque, provenant de l’analyse des propriétés magnétiques, minéralogiques et géochimiques des sédiments en suspension et de surface permettent de mettre en évidence le rôle couplé de ces mécanismes de transport et des apports côtiers sur la sédimentation dans le GSJ et de caractériser la dynamique sédimentair
+e dans le golfe.",#
+    "As part of ArcticNet’s Long-Term Oceanic Observatories (LTOO) project, moored sediment traps have been deployed at the Beaufort Sea shelf break since 2003 to monitor the downward flux of biogenic matter. Here, we use phytoplankton cells and zooplankton (swimmers) collected in sediment trap samples from 2009 to 2015 to investigate the match or mismatch between primary production and the vernal migration of zooplankton from winter depths to the surface layer. Interannual differences in timing between the phytoplankton bloom and the migration of copepods were investigated in function of water temperature from current meters deployed on the same moorings, as well as satellite-derived sea ice concentration and snow depth. The occurrence of the key copepod Calanus glacialis was associated with peaks in abundance of the true ice-algae Nitzschia frigida, while Calanus hyperboreus and their nauplii were associated with peaks in diatom abundances. In most years sampled, C. glacialis arrived ~15 days before the
+export of N. frigida, while C. hyperboreus nauplii coincided with peaks in diatom fluxes. However, an unusually warm upper water column in fall 2012 and winter/spring 2013 accompanied with late snow melt and sea ice break-up delayed the export of N. frigida and resulted in C. glacialis arriving ~90 days earlier than the export of ice algae.  A ~90 days delay was also observed between C. hyperboreus nauplii and the peak in diatom fluxes. As ice algae and phytoplankton are essential food source for the reproduction and development of Calanus copepods, those mismatch events likely have negative impact on their recruitment and on the transfer of energy within the Arctic food-web.",#
+    "La morphologie d\'une plage dépend des marées et vagues. En retour, elle influence l’élévation de la nappe d\'eau à l’origine des inondations. Mesurer cette élévation requiert l’acquisition de la topographie par LiDAR. Or, les levés LiDAR étant limités et coûteux, le suivi haute fréquence de la morphologie est problématique. Un réseau de caméras vidéo a donc été installé sur les côtes du Saint-Laurent, et une première comparaison des topographies obtenues par vidéo vs LiDAR a été réalisée sur la péninsule Manicouagan (Qc). Deux caméras y enregistrent en continu les niveaux d’eau. La détection de la ligne d’eau instantanée à l’interface eau/substrat a été réalisée par l’analyse d’images d’après des rapports de bandes R/B pour un cycle de marée, en associant à chaque ligne la hauteur d’eau mesurée par des capteurs in situ. Les MNT obtenus par vidéo et LiDAR montrent une très bonne corrélation, justifiant l’emploi de vidéos pour étudier la
+morphodynamique des plages.",#
+    "La composition des communautés phytoplanctoniques est déterminée par les variations des conditions hydrodynamiques. Les changements climatiques affectent vraisemblablement leur variabilité spatiale et temporelle, et la télédétection peut être utilisée pour identifier les groupements fonctionnels de phytoplancton dominants à l’échelle globale. Néanmoins, les approches actuelles sont limitées par le faible nombre de bandes des capteurs multispectraux (5 à 10). À cet effet, une méthodologie sera proposée pour la discrimination des groupements fonctionnels de phytoplanctons à partir des données hyperspectrales (>100 bandes). Une telle approche se base sur la comparaison des propriétés optiques inhérentes de l’eau et de la composition pigmentaire des communautés mesurées in situ. Des résultats préliminaires, produits à partir de données acquises lors des campagnes ArcticNet (2014) et VITALS (2015-2016) dans la Baie de Baffin et la Mer du Labrador, serviront à discuter du pot
+entiel des données hyperspectrales pour la télédétection du phytoplancton.",#
+    "Climate change and increasing resources exploitation in the Arctic contribute to increases in shipping traffic. These changes potentially increase rates of biological introduction of non-indigenous species into coastal ecosystems. To identify new species and diagnose their impacts on the biodiversity of the ecosystem, it is important to create an up-to-date baseline on the current complement of native and non-indigenous species. The objective of this study is to determine and compare the diversity and abundance of the mesozooplankton communities, focussing on copepods, within and between three of the most active Canadian Arctic ports (Iqaluit, Churchill, Deception Bay). We sampled 10 stations per port between 2015 and 2016 using 80µm and 250μm nets. All identified specimens are being compared with a compiled Arctic Canadian database of historical species records to determine their status (native, non-indigenous, cryptogenic). Results on species richness, abundance and zooplankton heterogeneity will b
+e presented for the port of Iqaluit.",#
+    "La distribution spatiale hétérogène des organismes benthiques est bien connue et n’est pas un phénomène d’intérêt nouveau. La cause de dispersion et d’agrégation spécifique ont souvent été étudiés, mais la majorité de ces études furent établies à grande échelle spatiale (km). Ainsi, en raison de la complexité de l’environnement benthique, le manque de recherches à petite échelle (m), la dynamique d’assemblage des communautés benthiques est très difficile à prédire. Ce projet vise à comprendre la dynamique et la relation des assemblages benthiques de l\'épifaune et de l\'endofaune à petite échelle (m), dans l’Arctique canadien. Ce type d’étude nous a permis d’obtenir des informations à haute définition sur la distribution du benthos.",#
+    "Dans le cadre du projet CHONe II, nous avons échantillonné les écosystèmes autour de Sept-Îles afin de (i) savoir dans quelle mesure les communautés benthiques sont affectées par les stresseurs d\'origine anthropique (industrie, ville…) ou naturelle (rivières…), et (ii) détecter et modéliser l\'impact éventuel du cumul des stresseurs sur leur structure.",#
+    "Les organismes benthiques sont essentiels dans le réseau trophique, puisqu’ils sont la principale source de nourriture pour certaines espèces d’oiseaux marins, dont les eiders à duvet du sanctuaire d’oiseau d’East Bay au Nunavut. Il est primordial d’étudier les écosystèmes actuellement en place en arctique, qui sont dominés par un couplage pélago-benthique important, mais qui subiront une transition vers un système dominé par le pélagos et le zooplancton affectant ainsi indirectement les canards plongeurs. Mon projet vise à étudier la répartition spatiale des principales proies des eiders à duvet à East Bay qui sont des bivalves (Hiatella arctica, Serripes spp), des gastéropodes (Acmea testudinalis) et des amphipodes. Des photographies sous-marines et des valeurs de paramètres environnementaux récoltées à l’été 2016 permettront d’établir un lien entre l’abondance de ces espèces et les conditions environnementales. De plus, il sera possible de vérifier la corré
+lation entre ces abondances et l’utilisation de l’habitat par les eiders.",#
+    "En Arctique, les nouvelles conditions de glace permettent une pénétration accrue de la lumière dans la colonne d\'eau. Puisque la lumière est essentielle à la production primaire, la fonte des glaces risque de devancer la floraison printanière. Par contre, les floraisons peuvent être limitées par la disponibilité des nutriments et de l\'azote en particulier. Peu de données existent sur l’importance relative de l’éclairement et des apports en azote pour le contrôle de la durée et de l’intensité des blooms printaniers dans l’Océan Arctique. Il est primordial d’évaluer l’ensemble des processus qui impact sur la floraison printanière en Arctique puisque celle-ci est responsable d’une grande partie des flux biogéochimiques annuels dans l’Océan Arctique. L’emphase de ce projet sera mise sur l’importance relative de l’éclairement et des apports en azote pour le contrôle de la durée et de l’intensité des blooms printaniers dans la Baie de Baffin.",#
+    "Dans les systèmes frontaux côtières, l’énergie turbulente fournie principalement par les marées est responsable du mélange vertical. Ceci injecte des nutriments vers les eaux éclairées, ce qui permet la croissance et l’accumulation de phytoplancton. En même temps, le mélange turbulent transportera ce phytoplancton vers la zone profonde, plus sombre. Ce projet vise à décrire les conditions physiques et chimiques du front de marée du sud du golfe San Jorge (Argentine) pendant un cycle de marée vive-eau/morte-eau, afin de caractériser les conséquences de sa variabilité spatiotemporelle sur la biomasse, la composition et la physiologie des assemblages de phytoplancton Cinq stations ont été étudiées à chaque moment du cycle, à l’aide d’un CTD, et six transects avec un Scanfish, et un ADCP. Des résultats préliminaires montrent que la biomasse du phytoplancton est supérieure du côté du front où il y a une plus grande concentration des nutriments et où la colonne d’eau e
+st stratifiée.",#
+    "L’intensification du transport d’hydrocarbures sur la voie maritime du Saint-Laurent augmente les risques de déversements pétroliers, dont les conséquences sur les communautés aquatiques locales sont peu étudiées. L’introduction d’hydrocarbures peut affecter la structure (diversité taxonomique et abondance) et le métabolisme (diversité métabolique et productivité) des communautés bactériennes via le développement de souches hydrocarbonoclastes aptes à utiliser les hydrocarbures comme source de carbone. Des expériences en conditions contrôlées en mésocosmes ont permis de suivre, durant l’évolution du bloom phytoplanctonique, les réponses de la communauté bactérienne indigène face à l’introduction, chronique ou aigüe de 20mL de diesel maritime. Un échantillonnage journalier a permis de déterminer les abondances bactériennes et virales, de mesurer la productivité (TdR), la diversité métabolique (Ecoplate Biolog) et la diversité taxonomique (PCR/DGGE) de la comm
+unauté bactérienne de l’estuaire. Les résultats préliminaires montrent un effet modéré du diesel sur l’abondance totale et la diversité métabolique des communautés bactériennes.",#
+    "La circulation méridionale constitue un des plus importants régulateurs du climat global via le transport de chaleur et de sel entre les deux hémisphères, mais également entre les abysses des bassins atlantique et pacifique et la surface. Cette connexion entre la couche de surface au contact de l\'atmosphère et les abysses occure au niveau de l\'océan austral, le long des isopycnes inclinées de cette région. L\'utilisation d\'un modèle empirique idéalisé d\'un bassin océanique s\'étalant sur les deux hémisphères permet de mettre en évidence le rôle ainsi que le caractère interdépendant de certains paramètres sur l\'établissement de cette circulation. Ces paramètres très influents voire indispensables sont le profil zonal de vent (austral surtout) couplé au courant circumpolaire aisni que les flux thermiques et halins entre l\'atmosphère et l\'océan. Après avoir établi une circulation satisfaisante avec ce jeu de paramètres, le couplage avec un modèle de glace permettra d\
+'étudier l\'influence d\'une couche de glace aux propriétés isolantes sur celle-ci.",#
+    "Le zooplancton joue un rôle clé dans le fonctionnement des écosystèmes marins, car il permet le transfert d’énergie et du carbone fixé par les producteurs primaires vers les niveaux trophiques (NT) supérieurs. L’objectif de cette étude est de caractériser la communauté zooplanctonique dans le golfe San Jorge (GSJ; Argentine) en termes de biodiversité, de distribution spatiale en relation avec des facteurs environnementaux et de leur rôle trophique. Une grille de 14 stations a été échantillonnées en été austral 2014 à bord du N/R Coriolis II. Les résultats préliminaires démontrent que la structure de la communauté est hétérogène, avec une diversité plus élevée dans l\'embouchure du golfe, en proximité des zones frontales. Les copépodes représentent le groupe dominant. Ils occupent un NT moyen, tandis que les chaetognathes (Sagitta sp.) et les euphausides se trouvent dans un NT supérieur. Néanmoins, il existe une hétérogénéité spatiale dans la structure du rése
+au trophique.",#
+    "Dans la Polynie des Eaux du Nord (NOW), la production primaire est élevée en surface et, via la sédimentation des particules, nourrit les organismes benthiques. Cette production et sédimentation évoluent dans un environnement en 4 dimensions que les méthodes d\'échantillonnages in situ ne permettent pas d’appréhender. Dans ce contexte nous allons utiliser un modèle de circulation pour rendre compte de l’effet de l’advection sur la sédimentation des particules dès leur production en surface jusqu\'à leur arrivée au fond, afin de cartographier les trajectoires possibles de sédimentation que l’on retrouve dans la NOW. Cela sera réalisé à l’aide d’un modèle idéalisé de la NOW, basé sur le modèle développé par Dumont et al. (2010), pour représenter le transport horizontal, la dynamique de la glace, les conditions météorologiques et la turbulence.",#
+    "Prasinophytes occur in all oceans but rarely dominate phytoplankton populations. In contrast, a single ecotype of the prasinophyte Micromonas is frequently the most abundant photosynthetic taxon reported in the Arctic from summer through autumn.  However, seasonal dynamics of prasinophytes outside of this period are little known. To address this, we analysed high throughput V4 18S rRNA amplicon data collected from November to July in the Arctic, Beaufort Sea, Amundsen Gulf Region. Surprisingly during polar sunset in November and December, we found a high proportion of reads from both DNA and RNA belonging to another prasinophyte, Bathycoccus. We then analysed a metagenome from a December sample and the resulting Bathycoccus metagenome assembled genome (MAG) covered ca. 90% of the Bathycoccus Ban7 reference genome. In contrast only ca. 20% of a reference Micromonas genome was found in the metagenome. Our phylogenetic analysis of marker genes placed the Arctic Bathycoccus in the B1 coastal clade. In addi
+tion, substitution rates of 129 coding DNA sequences were ca. 1.6 % divergent between the Arctic MAG and coastal Chilean upwelling MAGs and 17.3% between it and a SE Atlantic open ocean MAG in the B2 Clade. The metagenomics analysis also revealed a winter viral community highly skewed toward viruses targeting Micromonas, with a much lower diversity of viruses targeting Bathycoccus, suggesting that viral suppression of Micromonas during the winter may have contributed to the success of Bathycoccus. The occurrence patterns and susceptibility to viral infections suggested different ecological strategies in the two genera.",#
+    "The San Jorge Gulf (45° - 47°S, Argentina) is part of the Patagonian Shelf Large Marine Ecosystem, in the Atlantic coast of South America, one of the most productive marine regions of the world. Benthic biodiversity in the San Jorge Gulf is characterized by the presence of a high diversity of habitats and species. In the present study, the spatial distribution of benthic biodiversity in San Jorge Gulf is described considering taxonomic and functional diversity. Data collected with trawl and box corer sampling methods were analyzed. Functional traits explored include bioturbation mode, feeding strategies, size and mobility. Cluster analysis highlighted five communities on trawl samples and four on box corer samples. Their spatial distribution revealed that headlands are composed mostly of filter and opportunist feeders, while central region is characterised by deposit and opportunist feeders. However, α, γ, βindexes of diversity identified high variation within and between communities.",#
+    "Internal tides will scramble the sea surface height (SSH) signals associated with the submesoscales in Surface-Water-Ocean-Topography (SWOT) observations. It will be difficult to correct this interference because of internal tides that interact with mesoscale currents called incoherent internal tides.  The incoherent variability of the LSLE internal tides will be quantified experimentally with observations from four coastal high frequency radars (HFR) and moored ADCPs and CTDs, and numerically through predictions from a regional model. The effect of fronts and eddies on the internal tide’s amplitude and phase will be characterized qualitatively using observations and quantitatively with numerical predictions. This will allow us to design a spatial filter to remove the signature of internal tides on SSH, which will be tested on simulated SSH observations provided by a SWOT wide-swath altimeter simulator applied to SSH predicted by the regional model.",#
+    "The St. Lawrence hydrographic system is composed of a diversity of freshwater, brackish and marine habitats and is one of the largest and most important waterways in North America. This region is a crucial breeding ground for invertebrates, fish and marine birds and mammals. Ultimately, the health of these groups is dependent on phytoplankton, therefore understanding the forces that determine the productivity and composition of this keystone group of protists is critical to understanding the overall productivity of the system. The two major sources of phytoplankton mortality are believed to be grazing and viral lysis. In order to better understand the role of viruses, we characterized the diversity of two viral taxa, the picornavirads and phycodnavirids, which infect phytoplankton. Our study focused on the frontal area of the estuary transition zone, a region that is an important nursery for invertebrates and fishes. Both DNA and RNA viruses were investigated by PCR amplification of conserved molecular
+markers and next generation sequencing at 6 sites ranging from freshwater to marine. Our results revealed few shared viral phylotypes between saltwater and freshwater sites, and that salinity was the primary determinant of viral community composition. Moreover, our analysis indicates that the viruses identified in this region of the St. Lawrence are divergent from classified viruses and homologous published environmental virotypes. We conclude that these results suggest that DNA and RNA viruses infecting phytoplankton are present and likely active in the estuary transition zone and that this region harbors its own, mostly unique, viral assemblages.",#
+    "L’estuaire et le golfe du Saint-Laurent (EGSL) sont soumis à divers stresseurs d’origine anthropique qui menacent la grande diversité de mammifères marins qui y habite. L’EGSL présente, dans certaines zones, des caractéristiques océanographiques favorisant une forte productivité biologique qui semble attirer davantage de mammifères marins. Les assemblages d’espèces sont un élément clé de la caractérisation de la biodiversité. Dans le but de caractériser les assemblages de mammifères marins, plus de 170 inventaires effectués entre 1988 et 2015 et couvrant des portions variables de l’EGSL à diverses périodes de l’année ont été compilés. Une analyse de groupement hiérarchique a été jumelée à une régression logistique multinomiale afin de caractériser la relation entre les observations de mammifères marins et certaines variables environnementales. Une analyse compositionnelle des assemblages de mammifères marins obtenus a permis de détecter les variations entre
+ceux-ci et de prédire la distribution et la probabilité de présence des assemblages pour l’ensemble de l’EGSL.",#
+    "La communauté microbienne joue un rôle essentiel dans les cycles biogéochimiques, ce  qui affecte la structure et le fonctionnement des réseaux trophiques marins. Ce travail vise à caractériser la composition, biomasse et condition physiologique des associations de bactérioplancton et de phytoplancton dans le golfe San Jorge, Argentine, une zone de haute productivité soutenant d’importantes pêcheries. Douze échantillons d’eau ont été récoltés à bord du Coriolis II durant l’été 2014 à la profondeur du maximum de chlorophylle. Les premiers résultats montrent une grande biomasse de pico-eucaryotes dans la région sud-ouest du golfe associée à une forte biomasse bactérienne et une faible biomasse du microphytoplancton (diatomées et dinoflagellés). Les valeurs des paramètres photosynthétiques analysés suggèrent un bon état physiologique de ces organismes. Dans cette optique, la faible biomasse observée peut s’expliquer par  une forte pression de broutage qui empêcherai
+t leur accumulation, soutenant en même temps  une haute productivité secondaire.",#
+    "In the Canadian Arctic, important changes of the coastal biodiversity are expected due to the combine impact of the global climate changes and the increase of shipping activity. The analysis of environmental DNA (eDNA), a new cost-effective method tracing DNA from macro-organisms, may become a revolutionary tool to monitor extensive coastal biodiversity in the Arctic. Here we evaluate the potential of the eDNA metabarcoding to detect local species distribution in sensitive areas such as Arctic commercial ports (Churchill, Iqaluit and Deception Bay). More precisely, we first evaluate the spatial eDNA transport by contrasting biodiversity indices (alpha, beta, gamma) between eDNA and the local species distribution. Second, we contrast holoplankton and meroplankton detection rate related to their relative life cycle to evaluate the efficiency of the eDNA method among the different taxon of marine invertebrates. To achieve this, we collected water samples from three different depths at 13 sites in each por
+t. The water samples were then filtered directly on location. The eDNA was extracted and amplified using four primer sets (COI and 18S) and sequenced using next generation sequencing (i.e. Illumina MiSeq). To compare the biodiversity indices between eDNA and the spatial distribution of the species, the coastal organisms were collected using classical sampling method at each sampling site using a Van Veen grab sampler and a benthic trawl. In addition to evaluate the potential of the eDNA method to detect local biodiversity changes (e.g. biodiversity loss and introduction of invasive species) and inform about local ecological population and community patterns, this project will allow optimizing the eDNA method for possible applications in species monitoring and resource protection.",#
+    "Data is being collected from Oct, 15 to Nov 6 in 2016",#
+    "As part of the current surveillance programme in eastern Canada, larval recruitment plates are typically submerged in the water between two and six months during summer months. However, this sampling strategy may not be the most efficient one. Although used for early detection of aquatic invasive species (AIS), several months may have elapsed since the introduction of new AIS before plate deployment, plate retrieval and species identification. We aim to determine the minimal duration of sampling with plates to detect the presence of fouling species. Six deployment periods (duration: 1, 2, 4, 8, 16, and 32 days) were compared in a marina in Nova Scotia, Canada. For 32 consecutive days in July (seasonal onset of recruitment), a new set of plates was deployed every day. We found that recruitment patterns of 17 fouling marine species on plates were taxon-specific, which may be attributed to pre- and post-settlement processes. Yet, 1- and 2-day sampling durations were not able to uniformly detect fouling sp
+ecies. These findings suggest that the optimal minimum duration for most fouling species is between 8 and 16 days. This information will help meet the challenges of early detection of AIS by developing efficient sampling programmes to reduce the lag time from AIS introduction to detection.",#
+    "In marine ectotherms, the breadth of physiological tolerance largely determines species’ geographical distribution and extinction risk. Understanding the mechanisms underlying environmental tolerance windows and their relation to life history and demography is important for predicting taxa sensitivity to global changes. I propose to compare the capacity for trans-generational plasticity and rapid adaptation to ocean warming and acidification in phylogenetically closely-related polychaete species of the genus Ophryotrocha, with similar ecology, but different biogeography, as a test for biodiversity evolution under global change. In particular, I will define if rapid adaptation to multiple stressors can occur, reveal potential costs associated with plastic/adaptive responses, and draw projections on species demography, persistence, and biogeography under different global change scenarios.",#
+    "L’océan piège 1/3 des émissions de dioxide de carbonne dans l’atmosphère, provoquant une baisse du pH des eaux, un phénomène nommé l’acidification des océans (AO). Les organismes calcifiants, notamment le homard Américain, une espèce qui vaut au delà de 600$ million en 2015, en souffre puisqu’il demande plus d’énergie pour combattre le dérèglement de leur homéostasie et la destruction de leur couche protéineuse qui protège leurs coquilles calcifiés. Ayant aussi un cycle de vie complexe, le homard Américain a de nombreuses mues et une métamorphose importante entre la phase larvaire pélagique et les premières phases juvéniles benthiques. Cette transition d\'écotone rend les premières phases juvéniles particulièrement couteuses en énergie. Ceci peux les rendre plus sensible à l\'AO. L’objectif de ce projet est de determiner les effets de l’AO et de pH bas extremes sur (1) les traits d’histoire de vie (la survie, le développement, et la morphologie), et (2) sur
+les traits physiologiques (respirométrie, calcification, et fonction mitochondriale). En soumettant 840 homards American pendant leur trois premiers stades de développement juvénile à un pH representatif des prédictions de conditions futures de nos oceans (8,00; 7,88; 7,79; 7,72; 7,63; 7,34; 7,12), les traits d’histoire de vie ont été observés. À chaque stade de vie, des individus ont été échantillonnés pour des analyses en laboratoire pour déterminer les effet de l\'AO sur les traits physiologique des homards juvéniles.",#
+    "Since the last twenty years, use of nanoparticles has considerably increased and they can be found in a great variety of products. One of the mostly used nanoparticles are silver nanoparticles (AgNPs) which bactericidal properties are of great interest in medical care, textiles and food industries. The great use of AgNPs leads to their release into the environment, mostly through wastewater. Once into the aquatic environment, AgNPs may interact in a dynamic way with inorganic and organic matter as well as with all kind of organisms. These interactions may alter the behavior and impacts of the AgNPs, leading to unexpected environmental effects. Moreover, AgNPs have been shown to be toxic for other organisms than bacteria only and their potential impacts on the food web and environment remain to be understood. Here, based on literature, we tried to highlight the main transformations that may occur on AgNPs and their impacts on different organisms along the aquatic food web.",#
+    "Mass-specific absorption (aSPM*) and scattering (bSPM*) coefficients of suspended particulate matter (SPM) were measured for different size (0.2-0.4 µm, 0.4-0.7 µm, 0.7-10 µm, and >10 µm) and chemical (organic vs mineral dominant) fractions in surface waters of the Saint Lawrence System and during Spring 2013. In general, for the visible and near-infrared spectrum, our aSPM* and scattering cross sections for PIM (particulate inorganic matter) estimates were higher with respect to those measured in other littoral environments. Correlation analysis suggests that particle composition (size distribution) has a larger (smaller) impact on aSPM* with respect to bSPM*.",#
+    "Polar winter in the Arctic can last as long as 6 months each year at high latitude. During this period, no light is available for photoautotrophic growth. Nevertheless, in spring, a phytoplankton bloom in the surface ocean layers develops. How do photoautotrophic communities (mainly diatoms) survive through winter darkness until light returns in spring? To understand the acclimation processes at stake of a polar sea-ice diatom, Fragilariopsis cylindrus, in both darkness and during the return to light, we measured a set of parameters at specific time-points up to 3 months of darkness and up to 6 days upon return to light. We conclude that during prolonged darkness, Fragilariopsis cylindrus enters a « physiologically resting state » by dropping photosynthetic capacity. Nevertheless, thanks to fast photoprotection and renewal of photosynthetic components, rapid recovery of photophysiology occurs already after few hours of return to light, followed by subsequent cell growth.",#
+    "La migration verticale diurne (MVD) caractérise plusieurs organismes du milieu marin et dans les eaux douces continentales. Pour certains groupes de zooplancton marin, la MVD constitue à la fois une stratégie d’évasion des prédateurs et de recherche de nourriture dans la zone productive de l’océan, constituant aussi un facteur de mobilité verticale du carbone organique. Cependant, peu de modèles numériques incorporent ce type de comportement et son effet sur les flux de carbone sont peu analysés. Nous présentons ici la paramétrisation de la MVD et quelques conséquences sur la production, le transport et la séquestration de carbone dans le fond marin (la « pompe biologique ») dans un modèle 1D de colonne d’eau appliqué au Golfe San Jorge, en Patagonie (Argentine).",#
+    "The decrease in ocean pH, mainly due to ocean acidification (OA) represents a particularly complex challenge for marine ectotherms, more precisely for early life stages which are considered as particularly sensitive to environmental changes. Living and developing in lower pH than the current exposure can exert negative impacts via challenging respiration and acid-base balance or imposing increase in energy requirement for different metabolic pathways (such as the ones involved in calcification). As the economic and social consequences of OA on the Canadian lobster fishery is a priority, we led an experiment exposing American lobster larvae from stage I to stage V to one of 7 pH/pCO2 conditions mimicking current, future OA conditions, and industrial leakages of CO2: 400 control, 800, 1000, 1200, 1500, 3000 and 5000 µatm of pCO2. In each pH and at each developmental stage, we characterized the survival, respiration rate (as a proxy of routine metabolism), and different morphometric parameters. We expect
+ed a high sensitivity to pH for the first larval stages while the first pH effects were observed for stage III larvae and particularly for stage IV juveniles. Analyses are still under progress to determine how pH affected carapace mineralisation and metabolome fingerprinting at each steps of the early life development of the American lobster.",#
+    "L’estuaire maritime du Saint-Laurent (EMSL) est un des écosystèmes estuariens les plus productifs de la planète. Un déversement d’hydrocarbures peut produire des impacts significatifs dans cet environnement, produisant des effets en cascade qui affectent les réseaux trophiques à tous les niveaux. Situé à la base de ces réseaux, le microzooplancton -MZP- est considéré comme le principal prédateur du phytoplancton, pouvant consommer 60-70% de la production primaire. Dans ce contexte, en août 2016 nous avons étudié les effets d’un déversement de carburant sur la succession planctonique de l’EMSL, en suivant une approche expérimentale en mésocosmes, sur la composition du MZP. Nous avons également fait des expériences afin d’étudier les effets des hydrocarbures sur le broutage du MZP. Des résultats préliminaires montrent que le MZP été dominé par des dinoflagellés (Protoperidinium sp.) et divers genres de ciliés tels que Ptychocylis, Parafavella, Tintinnopsis et Strombi
+dium.",#
+    "L’expansion du Port à Sept-Îles va augmenter la pression sur les écosystèmes se situant à proximité. Entres-autres, les macroalgues, qui expériencent déjà des déclins importants, risquent d’être affectées amplement par cette expansion. Afin de permettre de prendre des mesures nécessaires pour diminuer les impacts sur ces algues, plus d’informations doivent être recueillies. Nous proposons d’explorer des combinaisons réalistes de stresseurs en mésocosme afin de mieux comprendre comment ils intéragissent sur la croissance et la survie des fucales et des laminaires. Nous espérons aussi évaluer les \'tipping points\' de certains représentants de ces groupes d’algues afin de déterminer où se situe la plus grande vulnérabilité de ces organismes face aux stresseurs. Les connaissances obtenues, au cours de ce projet, pourraient permettre de diriger les efforts de conservation d’une façon plus économique et efficace.",#
+    "Les écosystèmes arctiques sont de plus en plus soumis aux changements globaux dû à un réchauffement des températures mais également dû à une activité anthropique accrue. Comprendre et caractériser ces écosystèmes en terme de biodiversité ainsi que de fonctionnement est primordial pour leurs gestions et leurs conservations. Mon projet a pour but de déterminer si les structures biogènes, présentes en mer de Baffin, peuvent-être caractérisées de hotspots en terme de biodiversité (richesse spécifique, biomasse totale…) et en terme de fonctionnement de l’écosystème (flux benthiques). Plus précisément, des incubations ont été réalisées afin de comparer le fonctionnement de l’écosystème benthique entre un patch de bamboo corals (Kerastoisis sp) et du sédiment nu. Cela permettra d’évaluer le potentiel des coraux comme hotspot concernant le fonctionnement de l’écosystème benthique et sa biodiversité associée",#
+    "Land-fast ice is an important component of the Arctic system, yet its representation in large-scale sea ice models remains a challenge, partly due to the difficult parameterization of ice fracture. This project focuses on both the observation and modelling of ice bridges in narrow channels in the absence of grounded ice ridges. MODIS brightness temperature imagery is used to show the succession of ice bridge stabilisations that shapes the land-fast ice in the Parry Channel. A 2D linear elastic model is also developed to  simulates the ice fracture in an idealised channel. The model is able to produce ice bridges that are sensitive to the choice of failure criterion. The different conditions that lead to the formation of a stable ice arch downstream of a channel (in divergent stress conditions) or upstream of a channel (in convergent stress conditions) are also presented.",#
+    "La diapause chez le zooplancton métazoaire est l’un des mécanismes clef des écosystèmes marins arctiques. Elle permet au zooplancton d’accumuler sous forme de lipides la forte mais courte production primaire arctique, et de la rendre ainsi disponible pendant toute l’année pour l’ensemble du réseau trophique. Afin de mieux comprendre l’impact qu’a ce trait sur l’écologie pélagique arctiques, nous l’implémenterons dans le modèle DARWIN. Ce modèle permet de générer des communautés planctoniques émergentes en réponse aux conditions environnementales. Néanmoins, il ne tient présentement pas compte du trait de diapause du zooplancton. Le contrôle de la diapause étant lié au métabolisme des lipides, l’implémentation numérique de ce trait est basée sur le ratio élémentaire C/N. Un découplage de la respiration et de l’excrétion azotée selon l’alimentation permet d’avoir des ratios C/N variables selon les conditions environnementales qui serviront à contrôl
+er l’entrée et la sortie de diapause, ainsi que les propriétés biologiques qui en dépendent.",#
+    "Depuis la révolution industrielle, les océans auraient absorbés le tiers du CO2 d’origine anthropique causant une augmentation de l’acidité des océans de 30 % (baisse de pH de 0,1 unité). Au rythme actuel, l’acidité des océans pourrait tripler d’ici la fin du siècle. Les conséquences de cette acidification des océans (AO) sur les organismes calcifiés, et notamment au cours de la phase larvaire, demeurent incertaines. L’objectif de cette étude est de quantifier l’effet de l’AO sur les stades larvaires du pétoncle géant Placopecten magellanicus, une espèce d’importance économique dans le Saint-Laurent. Après une fécondation assistée, les larves de P. magellanicus ont été exposées à quatre niveaux de pH (8.1, 7.85, 7.65 et 7.5) en microcosmes. Nos résultats préliminaires montrent que l’AO cause 1)une diminution dans la croissance larvaire, 2)un retard dans leurs développements, 3)une plus forte calcification, 4)des malformations et 5)des modifications dans leur
+s réserves lipidiques.",#
+    "The ocean’s biological, solubility and carbonate carbon pumps control the surface-to-deep gradient in carbon dioxide and hence strongly impact atmospheric levels. Quantifying these pumps individually is challenging because their impacts overlap with each other. This talk will focus on efforts using high precision measurements of inert gases to disentangle these transport mechanisms with particular emphasis on the solubility pump and to provide metrics to assess their efficiency in large climate models.",#
+    "En Arctique, les fortes contraintes physico-chimiques forcent le phytoplancton à trouver un compromis entre une limitation en lumière (profondeur) et en azote (N) (surface), menant à la formation d’un maximum de chlorophylle subsuperficiel (MCS). Toutefois, la fluctuation des conditions environnementales et la présence de communautés pélagiques complexes rendent difficile l’étude de la physiologie en condition in situ. Ainsi, nous avons évalué la réponse physiologique et biochimique en laboratoire de Chaetoceros gelidus (une diatomée cosmopolite couramment associée aux MCS) à différentes sources de N ainsi qu’à différentes conditions lumineuses. Au cours de cette étude, le taux de croissance, la concentration interne et externe des nutriments inorganiques ainsi que le carbone, l’azote, le phosphore et la silice particulaire ont été échantillonnés. Les résultats obtenus indiquent une grande flexibilité physiologique de C. gelidus face aux différentes conditions de culture
+. Ces données confirment bien le caractère cosmopolite de cette espèce en Arctique.",#
+    "Présentation du projet de maitrise. Dans l\'estuaire du Saint-Laurent, il existe divers habitats côtiers pouvant être vulnérables à une exploitation éventuelle d\'hydrocarbures. Cependant, bien que des efforts récents aient permis d’avoir plus de données, il y a un manque d\'informations sur ces habitats et leur fonctionnement. Ce projet vise à accroitre notre connaissance des habitats côtiers en y comparant plusieurs variables biologiques entre différents habitats. Une meilleure connaissance du rôle des communautés qui y sont présente sur le fonctionnement de leurs habitats pourra être très utile dans le contexte de vulnérabilité de l’écosystème. Dans cette étude nous voulons circonscrire et comparer, pour chaque type d\'habitats, le fonctionnement écologique des zones en fonction de leur niveau de stress environnemental.",#
+    "L’ouest canadien représente une réserve d’envergure pour le pétrole brut non-classique sous forme de bitume. Une fois dilué, ce dernier s’exporte aisément ce qui laisse présager son omniprésence au sein des exportations canadiennes futures. Le comportement des bitumes dilués (dilbits) et leurs effets biologiques sont encore inconnus pour un déversement hivernal avec une couverture de glace en milieu marin. En reproduisant ce scénario en mésocosme et en exposant pendant 7 jours le bivalve Mytilus édulis au dilbit et au pétrole brut classique, nous avons quantifié les effets biologiques immédiats et retardés. Après 72 h d’exposition, la bioaccumulation des hydrocarbures est observable ainsi qu’un stress cellulaire et physiologique. Les effets négatifs sur la ponte printanière sont évidents au niveau des gamètes produits, de la survie des larves ainsi que de leur développement. Nos expériences ont démontré que ces réponses toxiques sont plus marquées pour une expositio
+n au pétrole brut non-classique.",#
+    "Lorsqu’elles sont connectées aux aquifères côtiers, les plages de sédiments perméables agissent comme des estuaires souterrains (ES) où les eaux des aquifères se mélangent aux eaux côtières. Ces systèmes souterrains sont des voix d’échange de matière, notamment de carbone organique dissous (COD), entre les deux milieux. Dans l’ES de la plage d’étude aux Iles-de-la-Madeleine, la mesure d’indices optiques ainsi que de la signature isotopique du COD  montre que ce dernier proviendrait du milieu terrestre et serait même produit directement dans le milieu. Cependant, il arrive qu’en période de tempête, des algues se déposent dans la zone intertidale de la plage. Quel est l’effet de ces dépôts sporadiques sur la signature isotopique du COD dans les eaux porales de l’ES? Telle est la question à laquelle je tenterai de répondre en me basant sur l’évolution des concentrations et des signatures isotopiques du COD ainsi que sur des potentielles sources de carbone dans la p
+lage.",#
+    "Species spending their entire life in the water column are expected to show small amount of genetic structure over great distances due to their passive dispersion through currents and due to the apparent absence of barriers in the ocean. Studying population structures of these species provide useful information on the presence of barrier in the ocean and help to understand how biodiversity arises. In the Arctic, amphipods belonging to the Themisto genus are one of the most abundant arctic crustaceans. Two Themisto species are found in the Arctic waters: T. abyssorum and T. libellula. Despite their ecological importance, very little genetic information is available for these species Here we investigated the population structure of T. libellula and T. abyssorum from Alaska to Greenland. First we assessed phylogenetic relationships within this genus using  mitochondrial and nuclear genes. Second, we used mitochondrial cytochrome oxidase I (COI) gene and Rad sequencing to investigate the genetic structure
+in the marine arctic crustaceans of Themisto over the Arctic Ocean. We discovered the presence of a cryptic species in the Alaskan waters which was previously confounded with its arctic congener T. libellula. In addition, we identified two populations in the Alaska and in the Canadian Archipelago based on thousands of single nucleotide polymorphism (SNP). The presence of these populations suggests limited exchanges even in the presence of strong currents. Additional studies on arctic pelagic species are needed in order to identify potential barriers present in the Arctic seas.",#
+    "Les études récentes démontrent que les décharges d’eaux souterraines (SGD) transportent d’importantes quantités de carbone à l’océan côtier. À l’interface continent-océan, les plages de sable sont des réacteurs biogéochimiques lorsqu’ils sont connectés aux aquifères côtiers, ce qu’on appelle un estuaire souterrain (ES). Dans cette présentation, je discuterai plus particulièrement des sources du carbone inorganique dissous (CID) dans l’ES de la plage de Martinique, Île-de-la-Madeleine. De forts flux de CID (2.0 à 8.2 mol/jour) ont été mesurés sur le site avec des valeurs de δ13C du DIC variant entre -14 ‰ à -28 ‰. Les sources possibles de ce CID seront présentées en se basant sur les distributions verticale et horizontale des concentrations en CID, alcalinité totale (Talk), sulfures et méthane. Le rapport stoechiométrique Talk/CID variant entre 0 et 1 suggère que la sulfato-reduction et la méthanogénèse sont les processus dominants de production de CID.
+",#
+    "Sediment dynamics in intertidal zones depends on hydrodynamic conditions as well as on sediment properties and biostabilization by microbial biofilm, which vary highly in time and in space. Subarctic climatic conditions impel strong seasonal variations in the St. Lawrence Estuary. Our project aims to determine the role of biofilm and its seasonal variations for sediment biostabilization in a subarctic tidal flat, to conduct the first winter measurements of sediment stability and sediment dynamics under land fast ice, in order to construct a full-year sediment budget for a subarctic tidal flat. Preliminary results show high difference of erosion threshold between high and low marsh, but less variation between low marsh, mudflat and sandflat.",#
+    "In this project, 4 pesticides, including Chlorothalonil, a-Endosulfan, Hexachlorobenzene and Pentachlorophenol were selected from 21 pesticides by in vitro tests (on cells only in 96 well-plates) on mussel. Chlorothalonil was selected to test the photolysis characteristic in marine waters. Then the in vivo exposition of chlorothalonil before/after photolysed on mussels were taken place in a temperature controlled room at 8℃, on the days of dissection (0, 24, 48 ,72 and 96h in exposition), the condition of the mussel is taken (physical measures), the hemolymph is ponctionned and the tissues (mantle and digestive gland) are weighed, homogenized and stored at -80℃. Cytotoxicity(cell viability), phagocytosis, prostaglandine synthase, lysozyme activity, GST activity, alkaline phosphate , genotoxicity, and so on were tested to research the effect of photochemical transformation of chlorothalonil on the toxicity on mussels.",#
+    "Microcystins are a family of hepatotoxins produced by cyanobacteria such as Microcystis, Anabaena and Oscillatoria. As the most common microcystin, microcystin-LR has aroused wide concern by researchers. Traditional water treatment to remove microcystin-LR like flocculation, precipitation and chlorination have been proved low efficiency. Photodegradation, a novel treatment technology is receiving much interest from researchers. In this study, light radiation, pH, temperature and humus are studied as  variables and focused on their foundation during the photodegradation of microcystin-LR.")#
+#
+QO2016_abstract[, 'Language'] <- c(#
+    "en",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "en",#
+    "en",#
+    "en",#
+    "fr",#
+    "en",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "en",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "en",#
+    "fr",#
+    "fr",#
+    "en",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "en",#
+    "en",#
+    "en",#
+    "en",#
+    "fr",#
+    "fr",#
+    "en",#
+    "en",#
+    "en",#
+    "en",#
+    "fr",#
+    "en",#
+    "en",#
+    "en",#
+    "fr",#
+    "en",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "en",#
+    "fr",#
+    "fr",#
+    "en",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "fr",#
+    "en",#
+    "fr",#
+    "en",#
+    "en",#
+    "en")#
+#
+save(x = QO2016_abstract, file = "./QO2016-Networking/QO2016-Abstract.RData")
+grViz("#
+#
+digraph boxes_and_circles{#
+#
+    node [shape = box#
+            fixedsize = TRUE#
+            # width = 0.5#
+            color = '#F8EEDC'#
+            fontsize = 9]#
+        1 [height = 1; width = 0.8]#
+        2 [height = 1; width = 0.8]#
+        3 [height = 1; width = 0.8]#
+        4 [height = 1; width = 0.8]#
+        5 [height = 1; width = 0.8]#
+#
+        1 -> 2 [arrowsize = 0.5; color = '#A55828']#
+        1 -> 5 [arrowsize = 0.5; color = '#A55828']#
+        2 -> 4 [arrowsize = 0.5; color = '#A55828']#
+        3 -> 1 [arrowsize = 0.5; color = '#A55828']#
+        3 -> 2 [arrowsize = 0.5; color = '#A55828']#
+        4 -> 1 [arrowsize = 0.5; color = '#A55828']#
+        4 -> 3 [arrowsize = 0.5; color = '#A55828']#
+        5 -> 3 [arrowsize = 0.5; color = '#A55828']#
+#
+    graph [ranksep = 0.35#
+            rank = source#
+            bgcolor = '#F8EEDC']#
+#
+}#
+")
+library(DiagrammeR)
+grViz("#
+#
+digraph boxes_and_circles{#
+#
+    node [shape = box#
+            fixedsize = TRUE#
+            # width = 0.5#
+            color = '#F8EEDC'#
+            fontsize = 9]#
+        1 [height = 1; width = 0.8]#
+        2 [height = 1; width = 0.8]#
+        3 [height = 1; width = 0.8]#
+        4 [height = 1; width = 0.8]#
+        5 [height = 1; width = 0.8]#
+#
+        1 -> 2 [arrowsize = 0.5; color = '#A55828']#
+        1 -> 5 [arrowsize = 0.5; color = '#A55828']#
+        2 -> 4 [arrowsize = 0.5; color = '#A55828']#
+        3 -> 1 [arrowsize = 0.5; color = '#A55828']#
+        3 -> 2 [arrowsize = 0.5; color = '#A55828']#
+        4 -> 1 [arrowsize = 0.5; color = '#A55828']#
+        4 -> 3 [arrowsize = 0.5; color = '#A55828']#
+        5 -> 3 [arrowsize = 0.5; color = '#A55828']#
+#
+    graph [ranksep = 0.35#
+            rank = source#
+            bgcolor = '#F8EEDC']#
+#
+}#
+")
+grViz("#
+#
+digraph boxes_and_circles{#
+#
+    node [shape = box#
+            fixedsize = TRUE#
+            # width = 0.5#
+            color = '#F8EEDC'#
+            fontsize = 9]#
+        1 [height = 1; width = 0.8]#
+        2 [height = 1; width = 0.8]#
+        3 [height = 1; width = 0.8]#
+        4 [height = 1; width = 0.8]#
+        5 [height = 1; width = 0.8]#
+#
+    edge [dir = back]#
+        1 -> 2 [arrowsize = 0.5; color = '#A55828']#
+        1 -> 4 [arrowsize = 0.5; color = '#A55828']#
+        2 -> 5 [arrowsize = 0.5; color = '#A55828']#
+        2 -> 4 [arrowsize = 0.5; color = '#A55828']#
+        4 -> 3 [arrowsize = 0.5; color = '#A55828']#
+#
+    graph [ranksep = 0.35#
+            rank = source#
+            bgcolor = '#F8EEDC']#
+#
+}#
+")
+grViz("#
+#
+digraph boxes_and_circles{#
+#
+    node [shape = box#
+            fixedsize = TRUE#
+            # width = 0.5#
+            color = '#F8EEDC'#
+            fontsize = 9]#
+        1 [height = 1; width = 0.8]#
+        2 [height = 1; width = 0.8]#
+        3 [height = 1; width = 0.8]#
+        4 [height = 1; width = 0.8]#
+        5 [height = 1; width = 0.8]#
+#
+    edge [dir = back]#
+        1 -> 2 [arrowsize = 0.5; color = '#A55828']#
+        1 -> 4 [arrowsize = 0.5; color = '#A55828']#
+        2 -> 5 [arrowsize = 0.5; color = '#A55828']#
+        2 -> 4 [arrowsize = 0.5; color = '#A55828']#
+        4 -> 3 [arrowsize = 0.5; color = '#A55828']#
+        2 -> 3 [arrowsize = 0.5; color = '#A55828']#
+    graph [ranksep = 0.35#
+            rank = source#
+            bgcolor = '#F8EEDC']#
+#
+}#
+")
+# Run init.r before other scripts#
+rm(list=ls())#
+#
+ # set own relevant directory if working in R console, otherwise ignore if in terminal#
+setwd("/Users/davidbeauchesne/Dropbox/PhD/Misc/SurveyTool/Survey")#
+# -----------------------------------------------------------------------------#
+# PROJECT:#
+#    Survey tool that automatically generates results for conference use#
+# -----------------------------------------------------------------------------#
+#
+# -----------------------------------------------------------------------------#
+# FUNCTIONS:#
+#
+# -----------------------------------------------------------------------------#
+# install.packages("shiny")#
+# install.packages("rdrop2")#
+# install.packages("stringr")#
+library(shiny)#
+runApp()
+rm(list=ls())#
+ # for use in R console.#
+ # set own relevant directory if working in R console, otherwise ignore if in terminal#
+setwd("/Users/davidbeauchesne/Dropbox/PhD/Misc/SurveyTool")#
+# -----------------------------------------------------------------------------#
+# PROJECT:#
+#    Survey tool that automatically generates results for conference use#
+# -----------------------------------------------------------------------------#
+#
+# -----------------------------------------------------------------------------#
+# FUNCTIONS:#
+#
+# -----------------------------------------------------------------------------#
+# install.packages("shiny")#
+# install.packages("rdrop2")#
+#  install.packages("stringr")#
+setwd("./Survey")#
+#
+# To initialize survey without any results#
+# Change loadData.r if I want to have more than 16 bars set aside in the plot#
+total_team <- 16#
+plot_table <- data.frame(name = '', Total = rep(0, total_team))#
+#
+saveRDS(plot_table, file = './plot_table.RDS')#
+#
+# To deploy app on shinyserver.io#
+library(rsconnect)#
+rsconnect::setAccountInfo(name='david-beauchesne', token='9E726A003F62EB18DAC88CFF483BD975', secret='5bdikPCf2o2tqne7QwpqVe7OajvxqaFwJ5JyDgc/')#
+deployApp()
+rm(list=ls())#
+ # for use in R console.#
+ # set own relevant directory if working in R console, otherwise ignore if in terminal#
+setwd("/Users/davidbeauchesne/Dropbox/PhD/Misc/Conference_networking")#
+# -----------------------------------------------------------------------------#
+# PROJECT:#
+#    Evaluating collaboration potential between conference participants#
+# -----------------------------------------------------------------------------#
+#
+# -----------------------------------------------------------------------------#
+# FUNCTIONS:#
+    # source('./Script/tm.r') # function to text mine abstract#
+    # source('./Script/tanimoto.r') # tanimoto similarity#
+    # source('./Script/tanimoto_sets.r') # tanimoto similarity for two sets#
+    # source('./Script/similarity.r') # tanimoto similarity for two sets for all participants#
+# -----------------------------------------------------------------------------#
+#
+setwd('./QO2016-Networking')#
+library(shiny)#
+runApp()#
+#
+# To deploy app on shinyserver.io
+# Run init.r before other scripts#
+rm(list=ls())#
+#
+ # set own relevant directory if working in R console, otherwise ignore if in terminal#
+setwd("/Users/davidbeauchesne/Dropbox/PhD/Misc/SurveyTool/Survey")#
+# -----------------------------------------------------------------------------#
+# PROJECT:#
+#    Survey tool that automatically generates results for conference use#
+# -----------------------------------------------------------------------------#
+#
+# -----------------------------------------------------------------------------#
+# FUNCTIONS:#
+#
+# -----------------------------------------------------------------------------#
+# install.packages("shiny")#
+# install.packages("rdrop2")#
+# install.packages("stringr")#
+library(shiny)#
+runApp()
+runApp()
+source('./loadData.r')
+loadData()
+plot_table <- loadData()
+plot_table
+x <- plot_table
+plot_data <- plot_data[-c(15,16), ]
+plot_table <- plot_data[-c(15,16), ]
+plot_table <- plot_table[-c(15,16), ]
+plot_table
+plot_table['Themisto', 'Total'] <- 23+42
+plot_table
+plot_table <- plot_table[-c('Theist'), ]
+plot_table[plot_table[, 'name'] == 'Theist', ]
+plot_table[!plot_table[, 'name'] == 'Theist', ]
+plot_table <- plot_table[!plot_table[, 'name'] == 'Theist', ]
+plot_table
+plot_table <- plot_table[order(plot_table[, 'Total']), ]
+plot_table
+plot_table <- plot_table[order(plot_table[, 'Total'], decreasing = TRUE), ]
+plot_table
+saveRDS(plot_table, file = './resultsQO.RDS')
+runApp()
+# Eval finale#
+    max_pt <- 140#
+    op <- par(mar = c(10,4,4,2) + 0.1)#
+    barplot(plot_table2[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table2[,'name'], las = 3)#
+    par(op) ## reset
+# Eval finale#
+    max_pt <- 140#
+    op <- par(mar = c(10,4,4,2) + 0.1)#
+    barplot(plot_table[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table[,'name'], las = 3)#
+    par(op) ## reset
+# Eval finale#
+#
+    plot_table <- readRDS()#
+    max_pt <- 95#
+    op <- par(mar = c(10,4,4,2) + 0.1)#
+    barplot(plot_table[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table[,'name'], las = 3)#
+    par(op) ## reset
+plot_table <- readRDS('./resultsQO.RDS')
+# Eval finale#
+#
+    plot_table <- readRDS()#
+    max_pt <- 95#
+    op <- par(mar = c(10,4,4,2) + 0.1)#
+    barplot(plot_table[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table[,'name'], las = 3)#
+    par(op) ## reset
+resultsQO
+plot_table
+plot_table <- readRDS('./resultsQO.RDS')#
+    max_pt <- 90#
+    op <- par(mar = c(10,4,4,2) + 0.3)#
+    barplot(plot_table[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table[,'name'], las = 3)#
+    par(op) ## reset
+# Eval finale#
+#
+    plot_table <- readRDS('./resultsQO.RDS')#
+    max_pt <- 90#
+    op <- par(mar = c(10,4,4,2) + 1)#
+    barplot(plot_table[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table[,'name'], las = 3)#
+    par(op) ## reset#
+#
+# Gagnants <- #
+# plot_table[Gagnants, 'Total'] <- plot_table[Gagnants, 'Total'] + 20
+# Eval finale#
+#
+    plot_table <- readRDS('./resultsQO.RDS')#
+    max_pt <- 90#
+    op <- par(mar = c(10,4,4,2) + 1.5)#
+    barplot(plot_table[,'Total'], ylim = c(0, max_pt), cex.axis = 1.25, cex.names = 1.25, names.arg = plot_table[,'name'], las = 3)#
+    par(op) ## reset#
+#
+# Gagnants <- #
+# plot_table[Gagnants, 'Total'] <- plot_table[Gagnants, 'Total'] + 20
+load("/Users/davidbeauchesne/Dropbox/PhD/Misc/SurveyTool/Survey/droptoken.rds")#
+
+x <- load("/Users/davidbeauchesne/Dropbox/PhD/Misc/SurveyTool/Survey/droptoken.rds")#
+#
+
+x <- readRDS("/Users/davidbeauchesne/Dropbox/PhD/Misc/SurveyTool/Survey/droptoken.rds")#
+#
+#
+
+x#
+
